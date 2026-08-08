@@ -287,7 +287,20 @@ p  { color: var(--body); }
   display: grid; grid-template-columns: minmax(0, 340px) 1fr;
   gap: 64px; align-items: center; justify-content: center;
 }
-.include-visual { display: flex; justify-content: center; }
+.include-visual {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+}
+
+/* Swipeable dots — mobile only. pan-y keeps vertical scrolling native while
+   we read horizontal swipes ourselves. */
+.include-visual .phone { touch-action: pan-y; }
+.dots { display: none; gap: 9px; }
+.dot {
+  width: 7px; height: 7px; padding: 0; border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  transition: background .2s, transform .2s;
+}
+.dot.is-active { background: var(--accent); transform: scale(1.3); }
 
 /* Each .shot stacks in the same frame; only .is-active is visible */
 .shot {
@@ -463,4 +476,5 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   .page-head { padding: 48px 0 40px; }
   .cta-band { padding: 40px 24px; }
   .inc-card { padding: 16px 18px; gap: 13px; }
+  .dots { display: flex; }
 }
