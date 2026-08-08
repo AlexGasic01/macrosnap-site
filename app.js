@@ -211,10 +211,39 @@
            (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
   }
 
+  // Not every webview advertises itself in the UA, so the button fix can't
+  // depend on isInAppBrowser(). Any touch device gets it: opening a store
+  // link in a new tab buys nothing on mobile, and _blank is precisely what
+  // webviews swallow.
+  function isTouch() {
+    return navigator.maxTouchPoints > 0 ||
+           (window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  }
+
   function storeUrl() {
     if (isIOS())     return APP_STORE_URL;
     if (isAndroid()) return PLAY_STORE_URL || APP_STORE_URL;
     return APP_STORE_URL; // undetected → App Store, the primary platform
+  }
+
+  // Add ?debug=1 to the URL to see what the detector actually saw. Needed
+  // because some webviews don't identify themselves in the user agent —
+  // if inApp reads false inside Instagram, the UA below says why.
+  function maybeDebug() {
+    if (!/[?&]debug=1/.test(window.location.search)) return;
+
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:9999;" +
+      "background:#000;color:#3DD38A;font:11px/1.6 ui-monospace,Menlo,monospace;" +
+      "padding:12px;word-break:break-all;max-height:50vh;overflow:auto";
+    d.textContent =
+      "inApp=" + isInAppBrowser() +
+      "  iOS=" + isIOS() +
+      "  android=" + isAndroid() +
+      "  touch=" + isTouch() +
+      "\nstore=" + storeUrl() +
+      "\n\nUA=" + ua;
+    document.body.appendChild(d);
   }
 
   function init() {
@@ -222,10 +251,11 @@
     var links = document.querySelectorAll(".appstore");
     var url = storeUrl();
     var inApp = isInAppBrowser();
+    var harden = inApp || isTouch();
 
     Array.prototype.forEach.call(links, function (link) {
       link.setAttribute("href", url);
-      if (!inApp) return;
+      if (!harden) return;
 
       // In a webview, _blank tends to open yet another webview (or nothing).
       // Navigating in place is far more likely to reach the store.
@@ -239,6 +269,8 @@
         window.location.replace(storeUrl());
       });
     });
+
+    maybeDebug();
 
     if (!inApp) return;
 
