@@ -134,21 +134,62 @@
 
   var incCards = document.querySelectorAll(".inc-card");
   var shots    = document.querySelectorAll(".shot");
+  var dots     = document.querySelectorAll(".dot");
+  var phone    = document.querySelector(".include-visual .phone");
+
+  // Swipe left = back, swipe right = next. Flip to +1 for the more common
+  // convention (swipe left advances).
+  var SWIPE_LEFT_DELTA = -1;
+
+  // Deliberately not named `current` — that's already taken by the page
+  // tracker at the top of this IIFE.
+  var shotIndex = 0;
+
+  function selectShot(n) {
+    var total = shots.length;
+    shotIndex = ((n % total) + total) % total; // wraps at both ends
+    var id = String(shotIndex);
+
+    incCards.forEach(function (c) {
+      var on = c.dataset.shot === id;
+      c.classList.toggle("is-active", on);
+      c.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    shots.forEach(function (s) { s.classList.toggle("is-active", s.dataset.shot === id); });
+    dots.forEach(function (d) { d.classList.toggle("is-active", d.dataset.shot === id); });
+  }
 
   incCards.forEach(function (card) {
-    card.addEventListener("click", function () {
-      var i = card.dataset.shot;
-
-      incCards.forEach(function (c) {
-        var on = c === card;
-        c.classList.toggle("is-active", on);
-        c.setAttribute("aria-selected", on ? "true" : "false");
-      });
-      shots.forEach(function (s) {
-        s.classList.toggle("is-active", s.dataset.shot === i);
-      });
-    });
+    card.addEventListener("click", function () { selectShot(Number(card.dataset.shot)); });
   });
+
+  dots.forEach(function (dot) {
+    dot.addEventListener("click", function () { selectShot(Number(dot.dataset.shot)); });
+  });
+
+  if (phone) {
+    var startX = null, startY = null;
+
+    phone.addEventListener("touchstart", function (e) {
+      var t = e.changedTouches[0];
+      startX = t.clientX;
+      startY = t.clientY;
+    }, { passive: true });
+
+    phone.addEventListener("touchend", function (e) {
+      if (startX === null) return;
+      var t  = e.changedTouches[0];
+      var dx = t.clientX - startX;
+      var dy = t.clientY - startY;
+      startX = null;
+
+      // Ignore taps and anything more vertical than horizontal, so the
+      // gesture never fights the page scroll.
+      if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return;
+
+      selectShot(shotIndex + (dx < 0 ? SWIPE_LEFT_DELTA : -SWIPE_LEFT_DELTA));
+    }, { passive: true });
+  }
 
   /* ── History ──────────────────────────────────────────── */
 
