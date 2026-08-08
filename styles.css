@@ -234,17 +234,35 @@ p  { color: var(--body); }
   margin-bottom: 15px;
 }
 .rating-text { font-size: 13.5px; font-weight: 600; letter-spacing: -0.2px; color: var(--text); }
-/* Swap these spans for <img class="ph" src="…"> to use real photos */
 .ph {
   width: 32px; height: 32px; border-radius: 50%;
-  border: 2px solid var(--card); object-fit: cover;
-  background: linear-gradient(135deg, var(--g1), var(--g2));
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: #fff;
+  /* ring matches the card behind it — creates the notch between overlaps */
+  border: 2px solid var(--card);
+  object-fit: cover; display: block;
 }
 .ph + .ph { margin-left: -12px; }
 
 .avatars { display: flex; }
+
+/* ── In-app browser helper note (shown only inside IG/FB webviews) ── */
+.iab-note {
+  display: flex; align-items: flex-start; gap: 10px;
+  max-width: 340px; margin-top: 14px;
+  background: var(--card); border-radius: 12px;
+  padding: 11px 12px 11px 14px;
+  font-size: 12.5px; line-height: 1.55; color: var(--body);
+  animation: fadeUp .4s var(--ease) both;
+}
+.iab-note b { color: var(--text); font-weight: 600; letter-spacing: 1px; }
+.iab-close {
+  margin-left: auto; flex-shrink: 0;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 15px; line-height: 1; color: var(--body);
+  background: rgba(255,255,255,.08);
+  transition: background .15s, color .15s;
+}
+.iab-close:hover { color: var(--text); background: rgba(255,255,255,.14); }
 
 /* ═══════════════ PHONE FRAME ═══════════════ */
 .hero-visual { position: relative; display: flex; justify-content: center; }
@@ -295,8 +313,13 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 }
 .shot-icon svg { width: 100%; height: 100%; display: block; }
 
+/* title + pill share one row, so the pill stays beside wrapped text
+   instead of dropping onto its own line on narrow screens */
+.inc-title { display: flex; align-items: center; gap: 9px; }
+.inc-title b { min-width: 0; }
+
 .soon {
-  display: inline-block; vertical-align: 2px; margin-left: 7px;
+  flex-shrink: 0;
   background: rgba(255,255,255,.08);
   border-radius: 999px; padding: 2px 8px;
   font-size: 10.5px; font-weight: 600; letter-spacing: .2px;
