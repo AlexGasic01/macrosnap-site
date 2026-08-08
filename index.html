@@ -4,55 +4,11 @@
 <!-- charset must stay within the document's first 1024 bytes or browsers
      stop looking for it; it blocks nothing, so it sits ahead of the script. -->
 <meta charset="UTF-8" />
-<!-- ══ In-app browser bypass — first thing that executes in <head> ══
-     Runs before any CSS/font/script so Instagram's and Facebook's webviews
-     are sent to the store before the page has a chance to render. Kept
-     inline and self-contained: it cannot wait on app.js to download. ══ -->
-<script>
-(function () {
-  var ua = navigator.userAgent || "";
-  if (!(/Instagram/i.test(ua) || /\bFBAN\b|\bFBAV\b/i.test(ua))) return;
-
-  var APP_STORE_URL = "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
-  var PLAY_STORE_URL = ""; // no Android build yet — falls back to the App Store
-
-  var isAndroid = /Android/i.test(ua);
-  var isIOS = /iPad|iPhone|iPod/i.test(ua) ||
-              (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-  var url = isIOS ? APP_STORE_URL : (isAndroid ? (PLAY_STORE_URL || APP_STORE_URL) : APP_STORE_URL);
-
-  function go() {
-    // Parallel fallback, injected into <head>. Conditional on purpose — a
-    // static tag would redirect every visitor, not just webview users.
-    try {
-      var m = document.createElement("meta");
-      m.httpEquiv = "refresh";
-      m.content = "0;url=" + url;
-      document.head.appendChild(m);
-    } catch (e) {}
-
-    // replace() rather than href: no history entry, so Back can't bounce
-    // the user straight back into the redirect.
-    window.location.replace(url);
-  }
-
-  // Fire on the first painted frame, not mid-parse. Navigating from inside
-  // <head> halts the parser before <body> exists, so a blocked or slow
-  // hand-off leaves a permanently blank page with no button and no banner
-  // to fall back on. Two rAFs guarantee one frame has actually rendered —
-  // roughly 30ms, and the page survives if the redirect never lands.
-  function afterFirstPaint() {
-    requestAnimationFrame(function () { requestAnimationFrame(go); });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", afterFirstPaint);
-  } else {
-    afterFirstPaint();
-  }
-})();
-</script>
-
+<!-- No auto-redirect here on purpose. Instagram's webview blocks scripted
+     navigation to the App Store (verified on Instagram 441 / iOS 27 — the
+     script ran, resolved the URL and was simply ignored), and a pending
+     blocked navigation can suppress the tap that follows it. The store link
+     is reached by tapping the badge, or via "Open in Browser". -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>MacroSnap — Snap your food. Know your macros.</title>
   <meta name="description" content="MacroSnap uses your camera to log calories, protein, carbs and fat in seconds. No weighing. No searching. Just snap." />
@@ -122,7 +78,7 @@
           </div>
 
           <p class="iab-note" id="iabNote" hidden>
-            <span>Having trouble? Tap <b>•••</b> in the top right and select "Open in Browser".</span>
+            <span>Instagram blocks App Store links. Tap <b>•••</b> at the top right, then <b>Open in Browser</b>.</span>
             <button class="iab-close" id="iabClose" aria-label="Dismiss">×</button>
           </p>
         </div>
