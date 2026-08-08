@@ -315,7 +315,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 
 /* title + pill share one row, so the pill stays beside wrapped text
    instead of dropping onto its own line on narrow screens */
-.inc-title { display: flex; align-items: center; gap: 11px; }
+.inc-title { display: flex; align-items: center; gap: 16px; }
 .inc-title b { min-width: 0; }
 
 .soon {
@@ -325,7 +325,6 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   font-size: 10.5px; font-weight: 600; letter-spacing: .2px;
   color: var(--body); white-space: nowrap;
 }
-.inc-card.is-active .soon { color: var(--accent); }
 
 .include-cards { display: flex; flex-direction: column; gap: 12px; }
 .inc-card {
