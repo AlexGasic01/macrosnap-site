@@ -139,7 +139,7 @@
 
   // Swipe left = back, swipe right = next. Flip to +1 for the more common
   // convention (swipe left advances).
-  var SWIPE_LEFT_DELTA = -1;
+  var SWIPE_LEFT_DELTA = +1;
 
   // Deliberately not named `current` — that's already taken by the page
   // tracker at the top of this IIFE.
