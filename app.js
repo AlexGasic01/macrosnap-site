@@ -189,9 +189,11 @@
   // is one — nothing else needs to change.
   var PLAY_STORE_URL = "";
 
-  var REDIRECT_DELAY = 800;
-  var BANNER_DELAY   = 2500;
-  var ONCE_KEY       = "macrosnap_iab_redirected";
+  // The redirect itself now fires from the inline script at the top of
+  // <head>, before this file has even downloaded. What's left here is the
+  // fallback layer for when the webview blocks that: a working tap target
+  // and the manual "Open in Browser" hint.
+  var BANNER_DELAY = 2500;
 
   var ua = navigator.userAgent || "";
 
@@ -215,20 +217,6 @@
     return APP_STORE_URL; // undetected → App Store, the primary platform
   }
 
-  var redirected = false;
-
-  function redirectOnce() {
-    if (redirected) return;
-    redirected = true;
-    try { sessionStorage.setItem(ONCE_KEY, "1"); } catch (e) {}
-    window.location.href = storeUrl();
-  }
-
-  function alreadyRedirected() {
-    try { return sessionStorage.getItem(ONCE_KEY) === "1"; }
-    catch (e) { return false; }
-  }
-
   function init() {
     // Point every store button at the right platform's store.
     var links = document.querySelectorAll(".appstore");
@@ -248,17 +236,11 @@
       // the navigation ourselves from inside the gesture instead.
       link.addEventListener("click", function (e) {
         e.preventDefault();
-        redirected = true; // stop the timer firing on top of this
-        try { sessionStorage.setItem(ONCE_KEY, "1"); } catch (err) {}
-        window.location.href = storeUrl();
+        window.location.replace(storeUrl());
       });
     });
 
     if (!inApp) return;
-
-    if (!alreadyRedirected()) {
-      window.setTimeout(redirectOnce, REDIRECT_DELAY);
-    }
 
     var note  = document.getElementById("iabNote");
     var close = document.getElementById("iabClose");
