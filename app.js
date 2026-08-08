@@ -267,6 +267,16 @@
     var close = document.getElementById("iabClose");
     if (!note) return;
 
+    // Name the actual app doing the blocking — more actionable than a
+    // generic warning.
+    var slot = document.getElementById("iabApp");
+    if (slot) {
+      slot.textContent = /Instagram/i.test(ua)                   ? "Instagram"
+                       : /FBAN|FBAV|FB_IAB/i.test(ua)            ? "Facebook"
+                       : /musical_ly|Bytedance|TikTok/i.test(ua) ? "TikTok"
+                       : "This app";
+    }
+
     // Shown straight away: there's no redirect coming, so a delay is just
     // dead time spent waiting for something that will never happen.
     note.hidden = false;
