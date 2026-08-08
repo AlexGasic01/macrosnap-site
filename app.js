@@ -189,12 +189,6 @@
   // is one — nothing else needs to change.
   var PLAY_STORE_URL = "";
 
-  // The redirect itself now fires from the inline script at the top of
-  // <head>, before this file has even downloaded. What's left here is the
-  // fallback layer for when the webview blocks that: a working tap target
-  // and the manual "Open in Browser" hint.
-  var BANNER_DELAY = 2500;
-
   var ua = navigator.userAgent || "";
 
   function isInAppBrowser() {
@@ -257,17 +251,12 @@
       link.setAttribute("href", url);
       if (!harden) return;
 
-      // In a webview, _blank tends to open yet another webview (or nothing).
-      // Navigating in place is far more likely to reach the store.
+      // Strip _blank and then get out of the way. A plain anchor activated by
+      // a real tap is the ONE navigation a webview will still honour —
+      // scripted navigation (location.href / .replace) is what Instagram
+      // blocks, so calling preventDefault here would swap the mechanism that
+      // works for the one that doesn't.
       link.removeAttribute("target");
-
-      // A webview will often swallow the anchor's default activation, so the
-      // tap looks dead while long-press still offers "Open in new tab". Drive
-      // the navigation ourselves from inside the gesture instead.
-      link.addEventListener("click", function (e) {
-        e.preventDefault();
-        window.location.replace(storeUrl());
-      });
     });
 
     maybeDebug();
@@ -278,7 +267,9 @@
     var close = document.getElementById("iabClose");
     if (!note) return;
 
-    window.setTimeout(function () { note.hidden = false; }, BANNER_DELAY);
+    // Shown straight away: there's no redirect coming, so a delay is just
+    // dead time spent waiting for something that will never happen.
+    note.hidden = false;
 
     if (close) {
       close.addEventListener("click", function () { note.hidden = true; });
