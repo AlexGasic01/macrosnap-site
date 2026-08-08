@@ -83,11 +83,22 @@
   </a>
 
   <div id="coach">
-    Instagram blocks this link. Tap <b>•••</b> at the top right, then
-    <b>Open in external browser</b>.
+    <span id="appName">This app</span> may block this link. Tap <b>•••</b> at the
+    top right, then <b>Open in external browser</b>.
   </div>
 
 <script>
+  // Name the actual app doing the blocking — "Instagram may block this link"
+  // is far more actionable than a generic warning.
+  (function () {
+    var ua = navigator.userAgent;
+    var name = /Instagram/i.test(ua)                  ? "Instagram"
+             : /FBAN|FBAV|FB_IAB/i.test(ua)           ? "Facebook"
+             : /musical_ly|Bytedance|TikTok/i.test(ua) ? "TikTok"
+             : "This app";
+    document.getElementById("appName").textContent = name;
+  })();
+
   function cascade(list) {
     var i = 0;
     (function step() {
