@@ -167,3 +167,100 @@
     window.history.replaceState({ page: start }, "", slugFor(start));
   })();
 })();
+
+
+/* ═══════════════════════════════════════════════════════════
+   In-app browser bypass (Instagram / Facebook webviews)
+
+   Instagram and Facebook open links in their own embedded webview,
+   which frequently refuses the hand-off to the App Store. Detect that
+   case, attempt a direct navigation, and surface a manual escape hatch
+   if the webview blocks it.
+   ═══════════════════════════════════════════════════════════ */
+
+(function () {
+  "use strict";
+
+  var APP_STORE_URL =
+    "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
+
+  // No Android build exists yet, so this is intentionally empty and Android
+  // falls back to the App Store. Paste the Play Store URL here when there
+  // is one — nothing else needs to change.
+  var PLAY_STORE_URL = "";
+
+  var REDIRECT_DELAY = 800;
+  var BANNER_DELAY   = 2500;
+  var ONCE_KEY       = "macrosnap_iab_redirected";
+
+  var ua = navigator.userAgent || "";
+
+  function isInAppBrowser() {
+    return /Instagram/i.test(ua) || /\bFBAN\b|\bFBAV\b/i.test(ua);
+  }
+
+  function isAndroid() {
+    return /Android/i.test(ua);
+  }
+
+  // iPadOS 13+ reports a Mac user agent, so fall back to touch points.
+  function isIOS() {
+    return /iPad|iPhone|iPod/i.test(ua) ||
+           (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  }
+
+  function storeUrl() {
+    if (isIOS())     return APP_STORE_URL;
+    if (isAndroid()) return PLAY_STORE_URL || APP_STORE_URL;
+    return APP_STORE_URL; // undetected → App Store, the primary platform
+  }
+
+  var redirected = false;
+
+  function redirectOnce() {
+    if (redirected) return;
+    redirected = true;
+    try { sessionStorage.setItem(ONCE_KEY, "1"); } catch (e) {}
+    window.location.href = storeUrl();
+  }
+
+  function alreadyRedirected() {
+    try { return sessionStorage.getItem(ONCE_KEY) === "1"; }
+    catch (e) { return false; }
+  }
+
+  function init() {
+    // Point every store button at the right platform's store.
+    var links = document.querySelectorAll(".appstore");
+    var url = storeUrl();
+
+    for (var i = 0; i < links.length; i++) {
+      links[i].setAttribute("href", url);
+      // In a webview, _blank tends to open yet another webview (or nothing).
+      // Navigating in place is far more likely to reach the store.
+      if (isInAppBrowser()) links[i].removeAttribute("target");
+    }
+
+    if (!isInAppBrowser()) return;
+
+    if (!alreadyRedirected()) {
+      window.setTimeout(redirectOnce, REDIRECT_DELAY);
+    }
+
+    var note  = document.getElementById("iabNote");
+    var close = document.getElementById("iabClose");
+    if (!note) return;
+
+    window.setTimeout(function () { note.hidden = false; }, BANNER_DELAY);
+
+    if (close) {
+      close.addEventListener("click", function () { note.hidden = true; });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
