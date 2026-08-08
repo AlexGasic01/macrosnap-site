@@ -233,15 +233,28 @@
     // Point every store button at the right platform's store.
     var links = document.querySelectorAll(".appstore");
     var url = storeUrl();
+    var inApp = isInAppBrowser();
 
-    for (var i = 0; i < links.length; i++) {
-      links[i].setAttribute("href", url);
+    Array.prototype.forEach.call(links, function (link) {
+      link.setAttribute("href", url);
+      if (!inApp) return;
+
       // In a webview, _blank tends to open yet another webview (or nothing).
       // Navigating in place is far more likely to reach the store.
-      if (isInAppBrowser()) links[i].removeAttribute("target");
-    }
+      link.removeAttribute("target");
 
-    if (!isInAppBrowser()) return;
+      // A webview will often swallow the anchor's default activation, so the
+      // tap looks dead while long-press still offers "Open in new tab". Drive
+      // the navigation ourselves from inside the gesture instead.
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        redirected = true; // stop the timer firing on top of this
+        try { sessionStorage.setItem(ONCE_KEY, "1"); } catch (err) {}
+        window.location.href = storeUrl();
+      });
+    });
+
+    if (!inApp) return;
 
     if (!alreadyRedirected()) {
       window.setTimeout(redirectOnce, REDIRECT_DELAY);
