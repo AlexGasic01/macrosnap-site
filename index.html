@@ -21,19 +21,35 @@
               (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
   var url = isIOS ? APP_STORE_URL : (isAndroid ? (PLAY_STORE_URL || APP_STORE_URL) : APP_STORE_URL);
 
-  // Parallel fallback, injected right after this script. Conditional on
-  // purpose — a static tag here would redirect every visitor, not just
-  // the ones stuck in a webview.
-  try {
-    var m = document.createElement("meta");
-    m.httpEquiv = "refresh";
-    m.content = "0;url=" + url;
-    document.head.appendChild(m);
-  } catch (e) {}
+  function go() {
+    // Parallel fallback, injected into <head>. Conditional on purpose — a
+    // static tag would redirect every visitor, not just webview users.
+    try {
+      var m = document.createElement("meta");
+      m.httpEquiv = "refresh";
+      m.content = "0;url=" + url;
+      document.head.appendChild(m);
+    } catch (e) {}
 
-  // replace() rather than href: no history entry, so Back can't bounce
-  // the user straight back into the redirect.
-  window.location.replace(url);
+    // replace() rather than href: no history entry, so Back can't bounce
+    // the user straight back into the redirect.
+    window.location.replace(url);
+  }
+
+  // Fire on the first painted frame, not mid-parse. Navigating from inside
+  // <head> halts the parser before <body> exists, so a blocked or slow
+  // hand-off leaves a permanently blank page with no button and no banner
+  // to fall back on. Two rAFs guarantee one frame has actually rendered —
+  // roughly 30ms, and the page survives if the redirect never lands.
+  function afterFirstPaint() {
+    requestAnimationFrame(function () { requestAnimationFrame(go); });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", afterFirstPaint);
+  } else {
+    afterFirstPaint();
+  }
 })();
 </script>
 
