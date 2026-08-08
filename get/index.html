@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<!-- Real browser? Leave immediately for the site. This is what makes the
+     escape self-completing: when the user picks "Open in external browser",
+     Safari reloads THIS page, falls through to the line below, and lands on
+     macrosnap.shop without another tap. -->
+<script>
+  var SITE  = "https://macrosnap.shop/";
+  var STORE = "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
+
+  // Site first: get them out of the webview and onto the real site. If no
+  // browser will take them, fall back to opening the App Store app directly.
+  var SCHEMES = [
+    "googlechromes://macrosnap.shop/",                    // site, in Chrome
+    "itms-appss://apps.apple.com/us/app/id6759880124",    // fallback: store app
+    "itms-apps://apps.apple.com/us/app/id6759880124"      // fallback: older scheme
+  ];
+
+  var inApp = /Instagram|FBAN|FBAV|FB_IAB|musical_ly|Bytedance|TikTok/i.test(navigator.userAgent);
+
+  if (!inApp) location.replace(SITE);
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Get MacroSnap</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1A1A1A; color: #FFFFFF; min-height: 100svh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; padding: 32px 24px; text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                 "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mark { width: 66px; height: 66px; border-radius: 23%; display: block; }
+  h1 { font-size: 25px; font-weight: 600; letter-spacing: -0.8px; line-height: 1.2; }
+  p  { font-size: 14.5px; line-height: 1.6; color: #9A9A9A; max-width: 300px; }
+  a  { text-decoration: none; }
+
+  #go {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #3DD68C; color: #0F1F17;
+    padding: 14px 28px; border-radius: 10px;
+    font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
+    transition: transform .15s, filter .15s;
+  }
+  #go:active { transform: scale(.97); filter: brightness(1.06); }
+
+  #store { font-size: 13px; color: #9A9A9A; }
+  #store u { text-decoration-color: rgba(255,255,255,.25); text-underline-offset: 3px; }
+
+  #coach {
+    display: none;
+    max-width: 320px; background: #2E2E2E; border-radius: 12px;
+    padding: 13px 16px; font-size: 12.5px; line-height: 1.55; color: #9A9A9A;
+  }
+  #coach b { color: #FFFFFF; font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <img class="mark" src="../assets/icon.png" alt="" />
+  <h1>Get MacroSnap</h1>
+  <p>Snap your food, know your macros.</p>
+
+  <!-- Real anchor to the site, so long-press and non-webview taps work
+       natively. The scheme cascade only takes over inside a webview. -->
+  <a id="go" href="https://macrosnap.shop/">Continue to MacroSnap</a>
+
+  <a id="store" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124">
+    Or <u>download on the App&nbsp;Store</u>
+  </a>
+
+  <div id="coach">
+    Instagram blocks this link. Tap <b>•••</b> at the top right, then
+    <b>Open in external browser</b>.
+  </div>
+
+<script>
+  var i = 0;
+
+  function attempt() {
+    // Backgrounded means one of the schemes launched something — stop here.
+    if (document.hidden) return;
+
+    if (i >= SCHEMES.length) {
+      document.getElementById("coach").style.display = "block";
+      return;
+    }
+
+    location.href = SCHEMES[i++];
+    setTimeout(attempt, 450);
+  }
+
+  document.getElementById("go").addEventListener("click", function (e) {
+    if (!inApp) return;      // real browser: let the anchor go to the site
+    e.preventDefault();
+    attempt();
+  });
+</script>
+
+</body>
+</html>
