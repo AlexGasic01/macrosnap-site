@@ -2,25 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<!-- Real browser? Leave immediately for the site. This is what makes the
-     escape self-completing: when the user picks "Open in external browser",
-     Safari reloads THIS page, falls through to the line below, and lands on
-     macrosnap.shop without another tap. -->
+<!-- Real browser? Leave immediately. This is what makes the escape
+     self-completing: when the user picks "Open in external browser",
+     Safari reloads THIS page, falls through to the redirect below, and
+     lands on the right destination without another tap.
+     ?to=store means they asked for the App Store rather than the site. -->
 <script>
   var SITE  = "https://macrosnap.shop/";
   var STORE = "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
-  // Site first: get them out of the webview and onto the real site. If no
-  // browser will take them, fall back to opening the App Store app directly.
-  var SCHEMES = [
-    "googlechromes://macrosnap.shop/",                    // site, in Chrome
-    "itms-appss://apps.apple.com/us/app/id6759880124",    // fallback: store app
-    "itms-apps://apps.apple.com/us/app/id6759880124"      // fallback: older scheme
-  ];
+  var wantStore = /[?&]to=store/.test(location.search);
 
   var inApp = /Instagram|FBAN|FBAV|FB_IAB|musical_ly|Bytedance|TikTok/i.test(navigator.userAgent);
 
-  if (!inApp) location.replace(SITE);
+  if (!inApp) location.replace(wantStore ? STORE : SITE);
+
+  // Escape routes. Chrome reopens this page (which then forwards on its own);
+  // the itms schemes hand straight off to the App Store app.
+  var CHROME_SITE  = "googlechromes://macrosnap.shop/";
+  var CHROME_STORE = "googlechromes://macrosnap.shop/get/?to=store";
+  var STORE_SCHEMES = [
+    "itms-appss://apps.apple.com/us/app/id6759880124",
+    "itms-apps://apps.apple.com/us/app/id6759880124"
+  ];
+
+  // Site first, store as the fallback.
+  var SITE_CASCADE  = [CHROME_SITE].concat(STORE_SCHEMES);
+  // Store first, Chrome bounce as the fallback.
+  var STORE_CASCADE = STORE_SCHEMES.concat([CHROME_STORE]);
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Get MacroSnap</title>
@@ -65,8 +74,8 @@
   <h1>Get MacroSnap</h1>
   <p>Snap your food, know your macros.</p>
 
-  <!-- Real anchor to the site, so long-press and non-webview taps work
-       natively. The scheme cascade only takes over inside a webview. -->
+  <!-- Both are real anchors, so long-press and non-webview taps work
+       natively. The scheme cascades only take over inside a webview. -->
   <a id="go" href="https://macrosnap.shop/">Continue to MacroSnap</a>
 
   <a id="store" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124">
@@ -79,25 +88,35 @@
   </div>
 
 <script>
-  var i = 0;
+  function cascade(list) {
+    var i = 0;
+    (function step() {
+      // Backgrounded means one of the schemes launched something — stop.
+      if (document.hidden) return;
 
-  function attempt() {
-    // Backgrounded means one of the schemes launched something — stop here.
-    if (document.hidden) return;
+      if (i >= list.length) {
+        document.getElementById("coach").style.display = "block";
+        return;
+      }
 
-    if (i >= SCHEMES.length) {
-      document.getElementById("coach").style.display = "block";
-      return;
-    }
-
-    location.href = SCHEMES[i++];
-    setTimeout(attempt, 450);
+      location.href = list[i++];
+      setTimeout(step, 450);
+    })();
   }
 
   document.getElementById("go").addEventListener("click", function (e) {
-    if (!inApp) return;      // real browser: let the anchor go to the site
+    if (!inApp) return;              // real browser: anchor goes to the site
     e.preventDefault();
-    attempt();
+    cascade(SITE_CASCADE);
+  });
+
+  document.getElementById("store").addEventListener("click", function (e) {
+    if (!inApp) return;              // real browser: anchor goes to the store
+    e.preventDefault();
+    // Remember the choice, so escaping via "Open in external browser" reloads
+    // this page as ?to=store and forwards to the App Store, not the site.
+    try { history.replaceState(null, "", "?to=store"); } catch (err) {}
+    cascade(STORE_CASCADE);
   });
 </script>
 
