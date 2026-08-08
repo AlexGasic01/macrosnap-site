@@ -315,7 +315,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 
 /* title + pill share one row, so the pill stays beside wrapped text
    instead of dropping onto its own line on narrow screens */
-.inc-title { display: flex; align-items: center; gap: 9px; }
+.inc-title { display: flex; align-items: center; gap: 11px; }
 .inc-title b { min-width: 0; }
 
 .soon {
