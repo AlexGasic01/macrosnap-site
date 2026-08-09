@@ -1,135 +1,281 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-page="home">
 <head>
+<!-- charset must stay within the document's first 1024 bytes or browsers
+     stop looking for it; it blocks nothing, so it sits ahead of the script. -->
 <meta charset="UTF-8" />
-<!-- Real browser? Leave immediately. This is what makes the escape
-     self-completing: when the user picks "Open in external browser",
-     Safari reloads THIS page, falls through to the redirect below, and
-     lands on the right destination without another tap.
-     ?to=store means they asked for the App Store rather than the site. -->
-<script>
-  var SITE  = "https://macrosnap.shop/";
-  var STORE = "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
-
-  var wantStore = /[?&]to=store/.test(location.search);
-
-  var inApp = /Instagram|FBAN|FBAV|FB_IAB|musical_ly|Bytedance|TikTok/i.test(navigator.userAgent);
-
-  if (!inApp) location.replace(wantStore ? STORE : SITE);
-
-  // Escape routes. Chrome reopens this page (which then forwards on its own);
-  // the itms schemes hand straight off to the App Store app.
-  var CHROME_SITE  = "googlechromes://macrosnap.shop/";
-  var CHROME_STORE = "googlechromes://macrosnap.shop/get/?to=store";
-  var STORE_SCHEMES = [
-    "itms-appss://apps.apple.com/us/app/id6759880124",
-    "itms-apps://apps.apple.com/us/app/id6759880124"
-  ];
-
-  // Site first, store as the fallback.
-  var SITE_CASCADE  = [CHROME_SITE].concat(STORE_SCHEMES);
-  // Store first, Chrome bounce as the fallback.
-  var STORE_CASCADE = STORE_SCHEMES.concat([CHROME_STORE]);
-</script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Get MacroSnap</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #1A1A1A; color: #FFFFFF; min-height: 100svh;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 20px; padding: 32px 24px; text-align: center;
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-                 "Segoe UI", Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .mark { width: 66px; height: 66px; border-radius: 23%; display: block; }
-  h1 { font-size: 25px; font-weight: 600; letter-spacing: -0.8px; line-height: 1.2; }
-  p  { font-size: 14.5px; line-height: 1.6; color: #9A9A9A; max-width: 300px; }
-  a  { text-decoration: none; }
-
-  #go {
-    display: inline-flex; align-items: center; justify-content: center;
-    background: #3DD68C; color: #0F1F17;
-    padding: 14px 28px; border-radius: 10px;
-    font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
-    transition: transform .15s, filter .15s;
-  }
-  #go:active { transform: scale(.97); filter: brightness(1.06); }
-
-  #store { font-size: 13px; color: #9A9A9A; }
-  #store u { text-decoration-color: rgba(255,255,255,.25); text-underline-offset: 3px; }
-
-  #coach {
-    display: none;
-    max-width: 320px; background: #2E2E2E; border-radius: 12px;
-    padding: 13px 16px; font-size: 12.5px; line-height: 1.55; color: #9A9A9A;
-  }
-  #coach b { color: #FFFFFF; font-weight: 600; }
-</style>
+<!-- No auto-redirect here on purpose. Instagram's webview blocks scripted
+     navigation to the App Store (verified on Instagram 441 / iOS 27 — the
+     script ran, resolved the URL and was simply ignored), and a pending
+     blocked navigation can suppress the tap that follows it. The store link
+     is reached by tapping the badge, or via "Open in Browser". -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>MacroSnap — Snap your food. Know your macros.</title>
+  <meta name="description" content="MacroSnap uses your camera to log calories, protein, carbs and fat in seconds. No weighing. No searching. Just snap." />
+  <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
 
-  <img class="mark" src="../assets/icon.png" alt="" />
-  <h1>Get MacroSnap</h1>
-  <p>Snap your food, know your macros.</p>
-
-  <!-- Both are real anchors, so long-press and non-webview taps work
-       natively. The scheme cascades only take over inside a webview. -->
-  <a id="go" href="https://macrosnap.shop/">Continue to MacroSnap</a>
-
-  <a id="store" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124">
-    Or <u>download on the App&nbsp;Store</u>
+<!-- ══════════════════ TOP BAR ══════════════════ -->
+<nav class="nav" id="nav">
+ <div class="nav-inner">
+  <a class="nav-brand" href="#" data-link="home" aria-label="MacroSnap home">
+    <img class="mark" src="../assets/icon.png" width="28" height="28" alt="" />
+    <span class="wordmark">MacroSnap</span>
   </a>
 
-  <div id="coach">
-    <span id="appName">This app</span> may block this link. Tap <b>•••</b> at the
-    top right, then <b>Open in external browser</b>.
+  <ul class="nav-links" id="navLinks">
+    <li><button class="nav-link" data-link="home">Home</button></li>
+    <li><button class="nav-link" data-link="support">Support</button></li>
+  </ul>
+
+  <a class="nav-cta" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">Get the App →</a>
+
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+ </div>
+</nav>
+
+<!-- ══════════════════ MOBILE DRAWER ══════════════════ -->
+<div class="mobile-overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" hidden>
+  <div class="drawer-list">
+    <button class="drawer-link" data-link="home">Home</button>
+    <button class="drawer-link" data-link="support">Support</button>
   </div>
+  <div class="drawer-foot">
+    <a class="btn btn-cta btn-block" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">Get the App →</a>
+  </div>
+</aside>
 
-<script>
-  // Name the actual app doing the blocking — "Instagram may block this link"
-  // is far more actionable than a generic warning.
-  (function () {
-    var ua = navigator.userAgent;
-    var name = /Instagram/i.test(ua)                  ? "Instagram"
-             : /FBAN|FBAV|FB_IAB/i.test(ua)           ? "Facebook"
-             : /musical_ly|Bytedance|TikTok/i.test(ua) ? "TikTok"
-             : "This app";
-    document.getElementById("appName").textContent = name;
-  })();
+<main id="main">
 
-  function cascade(list) {
-    var i = 0;
-    (function step() {
-      // Backgrounded means one of the schemes launched something — stop.
-      if (document.hidden) return;
+  <!-- ══════════════════ PAGE: HOME ══════════════════ -->
+  <section class="page" data-page="home">
 
-      if (i >= list.length) {
-        document.getElementById("coach").style.display = "block";
-        return;
-      }
+    <div class="hero">
+      <div class="hero-grid-lines"></div>
+      <div class="hero-glow"></div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="rating-card fu" style="--d:0s">
+            <div class="avatars">
+              <img class="ph" src="../assets/boy30.png" width="32" height="32" alt="" />
+              <img class="ph" src="../assets/girl30.png" width="32" height="32" alt="" />
+              <img class="ph" src="../assets/boy20.png" width="32" height="32" alt="" />
+            </div>
+            <span class="rating-text">Rated 4.8 ⭐</span>
+          </div>
+          <h1 class="fu" style="--d:.08s">Snap your food.<br />Know your macros.</h1>
+          <p class="lead fu" style="--d:.16s">
+            Take a snap of your meal, MacroSnap works out the macros and tracks your intake
+          </p>
+          <div class="hero-btns fu" style="--d:.24s">
+            <a class="appstore" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
+              <img src="../assets/app-store-badge.svg" alt="Download on the App Store" style="height: 53px;">
+            </a>
+          </div>
 
-      location.href = list[i++];
-      setTimeout(step, 450);
-    })();
-  }
+          <p class="iab-note" id="iabNote" hidden>
+            <span><span id="iabApp">This app</span> may block this link. Tap <b>•••</b> at the top right, then <b>Open in Browser</b>.</span>
+            <button class="iab-close" id="iabClose" aria-label="Dismiss">×</button>
+          </p>
+        </div>
 
-  document.getElementById("go").addEventListener("click", function (e) {
-    if (!inApp) return;              // real browser: anchor goes to the site
-    e.preventDefault();
-    cascade(SITE_CASCADE);
-  });
+        <div class="hero-visual fu" style="--d:.2s">
+          <div class="phone">
+            <div class="phone-screen">
+              <img class="phone-img" src="../assets/hero-home.png" alt="The MacroSnap home screen showing calories and macros left for the day" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  document.getElementById("store").addEventListener("click", function (e) {
-    if (!inApp) return;              // real browser: anchor goes to the store
-    e.preventDefault();
-    // Remember the choice, so escaping via "Open in external browser" reloads
-    // this page as ?to=store and forwards to the App Store, not the site.
-    try { history.replaceState(null, "", "?to=store"); } catch (err) {}
-    cascade(STORE_CASCADE);
-  });
-</script>
+    <!-- ══════════════ WHAT'S INCLUDED (tabbed) ══════════════ -->
+    <section class="section">
+      <div class="wrap">
+        <div class="sec-head fu" style="--d:0s">
+          <h2>What does MacroSnap include?</h2>
+          <p class="lead center">Pick a feature to see it in the app.</p>
+        </div>
 
+        <div class="include">
+          <div class="include-visual fu" style="--d:.06s">
+            <div class="phone">
+              <div class="phone-screen">
+                <img class="shot is-active" data-shot="0" src="../assets/include-1.png" alt="A scanned plate of penne pasta with shredded beef, showing 530 calories and its macro split" />
+                <img class="shot" data-shot="1" src="../assets/include-2.png" alt="The Progress screen showing day streak, meals logged, a daily log and calories over time" />
+                <div class="shot is-locked" data-shot="2">
+                  <span class="shot-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                  <b>Coming soon</b>
+                  <span class="sub tiny">See what friends eat</span>
+                </div>
+                <div class="shot is-locked" data-shot="3">
+                  <span class="shot-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                  <b>Coming soon</b>
+                  <span class="sub tiny">Get healthy recipes</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="dots" id="incDots">
+              <button class="dot is-active" data-shot="0" aria-label="AI food scanning"></button>
+              <button class="dot" data-shot="1" aria-label="Track progress"></button>
+              <button class="dot" data-shot="2" aria-label="See what friends eat"></button>
+              <button class="dot" data-shot="3" aria-label="Get healthy recipes"></button>
+            </div>
+          </div>
+
+          <div class="include-cards fu" style="--d:.12s" role="tablist">
+            <button class="inc-card is-active" data-shot="0" role="tab" aria-selected="true">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3.5"/></svg></span>
+              <span class="inc-body">
+                <b>AI food scanning</b>
+                <span>Point your camera at any meal and get its macros back in seconds.</span>
+              </span>
+            </button>
+            <button class="inc-card" data-shot="1" role="tab" aria-selected="false">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span>
+              <span class="inc-body">
+                <b>Track progress</b>
+                <span>Streaks, daily logs and calories over time, all in one place.</span>
+              </span>
+            </button>
+            <button class="inc-card" data-shot="2" role="tab" aria-selected="false">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <span class="inc-body">
+                <span class="inc-title"><b>See what friends eat</b><span class="soon">Coming soon</span></span>
+                <span>Follow friends, compare streaks and keep each other honest.</span>
+              </span>
+            </button>
+            <button class="inc-card" data-shot="3" role="tab" aria-selected="false">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
+              <span class="inc-body">
+                <span class="inc-title"><b>Get healthy recipes</b><span class="soon">Coming soon</span></span>
+                <span>A fresh set of recipes each day, matched to your macro targets.</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ FAQ ══════════════ -->
+    <section class="section">
+      <div class="wrap">
+        <div class="sec-head fu" style="--d:0s">
+          <h2>Frequently asked questions</h2>
+        </div>
+        <div class="faq">
+          <details class="fu" style="--d:.06s">
+            <summary>I paid but the app still shows a payment page</summary>
+            <ol>
+              <li>Make sure you're signed into the Apple account you purchased with.</li>
+              <li>Tap the <b>Restore Purchase</b> button — it's at the top right, or underneath the green button at the bottom.</li>
+            </ol>
+          </details>
+
+          <details class="fu" style="--d:.1s">
+            <summary>I want a refund. How do I get one?</summary>
+            <p>Refunds depend on where you bought your subscription:</p>
+            <ul>
+              <li><b>Apple App Store:</b> Apple handles this directly.</li>
+              <li><b>Bought directly from MacroSnap?</b> Email us.</li>
+            </ul>
+            <div class="faq-btns">
+              <a class="btn btn-cta" href="https://support.apple.com/en-us/118223" target="_blank" rel="noopener noreferrer">Request refund from Apple</a>
+              <button class="btn btn-soft" data-link="support">Request refund from MacroSnap</button>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="cta-band fu" style="--d:0s">
+          <h2>Start tracking in under a minute</h2>
+          <p class="lead center">Free to download. Your first scan takes about two seconds.</p>
+          <div class="hero-btns center">
+            <a class="appstore" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer" style="display: inline-block;">
+              <img src="../assets/app-store-badge.svg" alt="Download on the App Store" style="height: 53px;">
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ══════════════════ PAGE: SUPPORT ══════════════════ -->
+  <section class="page" data-page="support" hidden>
+    <div class="page-head">
+      <div class="wrap">
+        <h1 class="fu" style="--d:.08s">Talk to a human</h1>
+        <p class="lead fu" style="--d:.16s">Real replies, usually within a few hours on weekdays.</p>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="contact">
+          <form class="card form fu" style="--d:0s" onsubmit="return false;">
+            <label>Name<input type="text" placeholder="Alex Gasic" /></label>
+            <label>Email<input type="email" placeholder="you@email.com" /></label>
+            <label>Topic
+              <select>
+                <option>General question</option>
+                <option>Billing &amp; subscriptions</option>
+                <option>A scan got it wrong</option>
+                <option>Coaching / team plans</option>
+                <option>Press</option>
+              </select>
+            </label>
+            <label>Message<textarea rows="5" placeholder="Tell us what's going on…"></textarea></label>
+            <button class="btn btn-cta btn-block" type="submit">Send message</button>
+            <span class="tiny sub center">This is a mock form — nothing is sent.</span>
+          </form>
+
+          <div class="contact-side">
+            <div class="card sm fu" style="--d:.08s">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div><h3>Email</h3>
+              <p>help@macrosnap.app<br /><span class="sub tiny">Mon–Fri, 9–6 GMT</span></p>
+            </div>
+            <div class="card sm fu" style="--d:.14s">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg></div><h3>Help centre</h3>
+              <p>Guides for scanning, targets, groups and export.</p>
+            </div>
+            <div class="card sm fu" style="--d:.2s">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M9 7.13V6a3 3 0 1 1 6 0v1.13"/><path d="M6 13H2"/><path d="M22 13h-4"/><path d="m6.5 9-2-1.2"/><path d="m19.5 7.8-2 1.2"/><path d="m6.5 17-2 1.2"/><path d="m19.5 18.2-2-1.2"/></svg></div><h3>Report a bug</h3>
+              <p>Shake your phone inside the app to attach logs automatically.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="footer">
+ <div class="footer-inner">
+  <a class="nav-brand" href="#" data-link="home">
+    <img class="mark" src="../assets/icon.png" width="24" height="24" alt="" />
+    <span class="wordmark">MacroSnap</span>
+  </a>
+  <span class="tiny sub">© 2026 MacroSnap. All rights reserved.</span>
+  <ul class="footer-links">
+    <li><button data-link="home">Home</button></li>
+    <li><button data-link="support">Support</button></li>
+    <li><a href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">App Store</a></li>
+    <li><button class="muted">Privacy</button></li>
+    <li><button class="muted">Terms</button></li>
+  </ul>
+ </div>
+</footer>
+
+<script src="../app.js"></script>
 </body>
 </html>
