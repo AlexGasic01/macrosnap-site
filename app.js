@@ -137,9 +137,9 @@
   var dots     = document.querySelectorAll(".dot");
   var phone    = document.querySelector(".include-visual .phone");
 
-  // Swipe left = back, swipe right = next. Flip to +1 for the more common
-  // convention (swipe left advances).
-  var SWIPE_LEFT_DELTA = +1;
+  // Swipe left = next, swipe right = back — content tracks the finger, like
+  // dragging the current card off to the left to reveal the next one.
+  var SWIPE_LEFT_DELTA = 1;
 
   // Deliberately not named `current` — that's already taken by the page
   // tracker at the top of this IIFE.
@@ -281,6 +281,26 @@
     document.body.appendChild(d);
   }
 
+  // Same escape cascade the /get page's "download on the App Store" link
+  // uses: try the App Store app directly, then bounce to Chrome as a last
+  // resort. Ported over verbatim rather than redesigned.
+  var STORE_SCHEMES = [
+    "itms-appss://apps.apple.com/us/app/id6759880124",
+    "itms-apps://apps.apple.com/us/app/id6759880124"
+  ];
+  var CHROME_STORE = "googlechromes://macrosnap.shop/get/?to=store";
+  var STORE_CASCADE = STORE_SCHEMES.concat([CHROME_STORE]);
+
+  function cascade(list) {
+    var i = 0;
+    (function step() {
+      if (document.hidden) return; // something launched — stop here
+      if (i >= list.length) return; // out of options; iabNote is already up
+      window.location.href = list[i++];
+      window.setTimeout(step, 450);
+    })();
+  }
+
   function init() {
     // Point every store button at the right platform's store.
     var links = document.querySelectorAll(".appstore");
@@ -292,12 +312,18 @@
       link.setAttribute("href", url);
       if (!harden) return;
 
-      // Strip _blank and then get out of the way. A plain anchor activated by
-      // a real tap is the ONE navigation a webview will still honour —
-      // scripted navigation (location.href / .replace) is what Instagram
-      // blocks, so calling preventDefault here would swap the mechanism that
-      // works for the one that doesn't.
+      // Strip _blank either way — opening a store link in a new tab buys
+      // nothing on mobile, and _blank is precisely what webviews swallow.
       link.removeAttribute("target");
+
+      if (!inApp) return;
+
+      // Inside a webview: same cascade as the /get store link, verbatim.
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        try { history.replaceState(null, "", "?to=store"); } catch (err) {}
+        cascade(STORE_CASCADE);
+      });
     });
 
     maybeDebug();
