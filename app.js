@@ -327,6 +327,15 @@
       link.addEventListener("click", function (e) {
         e.preventDefault();
         cascade(STORE_CASCADE);
+
+        // Give the cascade a moment to actually work before showing the
+        // escape-hatch banner. If a scheme succeeded, the page is already
+        // backgrounded by then and there's nobody left to show it to.
+        window.setTimeout(function () {
+          if (document.hidden) return;
+          var note = document.getElementById("iabNote");
+          if (note) note.hidden = false;
+        }, 600);
       });
     });
 
@@ -348,9 +357,9 @@
                        : "This app";
     }
 
-    // Shown straight away: there's no redirect coming, so a delay is just
-    // dead time spent waiting for something that will never happen.
-    note.hidden = false;
+    // Not shown here — only after a tap on the App Store button fails to
+    // go anywhere (see the click handler above). Showing it unconditionally
+    // on page load read as a warning before the user had tried anything.
 
     if (close) {
       close.addEventListener("click", function () { note.hidden = true; });
