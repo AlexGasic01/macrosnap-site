@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<!-- Real browser? Leave immediately for the site. This still works: it's a
-     page-load redirect outside any webview, not a click-triggered one.
+<!-- Real browser? Leave immediately. This is what makes the escape
+     self-completing: when the user picks "Open in external browser",
+     Safari reloads THIS page, falls through to the redirect below, and
+     lands on the right destination without another tap.
      ?to=store means they asked for the App Store rather than the site. -->
 <script>
   var SITE  = "https://macrosnap.shop/";
@@ -14,6 +16,20 @@
   var inApp = /Instagram|FBAN|FBAV|FB_IAB|musical_ly|Bytedance|TikTok/i.test(navigator.userAgent);
 
   if (!inApp) location.replace(wantStore ? STORE : SITE);
+
+  // Escape routes. Chrome reopens this page (which then forwards on its own);
+  // the itms schemes hand straight off to the App Store app.
+  var CHROME_SITE  = "googlechromes://macrosnap.shop/";
+  var CHROME_STORE = "googlechromes://macrosnap.shop/get/?to=store";
+  var STORE_SCHEMES = [
+    "itms-appss://apps.apple.com/us/app/id6759880124",
+    "itms-apps://apps.apple.com/us/app/id6759880124"
+  ];
+
+  // Site first, store as the fallback.
+  var SITE_CASCADE  = [CHROME_SITE].concat(STORE_SCHEMES);
+  // Store first, Chrome bounce as the fallback.
+  var STORE_CASCADE = STORE_SCHEMES.concat([CHROME_STORE]);
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Get MacroSnap</title>
@@ -58,13 +74,8 @@
   <h1>Get MacroSnap</h1>
   <p>Snap your food, know your macros.</p>
 
-  <!-- Plain anchors, nothing scripted on click. In Instagram's webview,
-       *scripted* navigation (location.href / .replace, from a click handler
-       or a scheme cascade) is what gets blocked — a real tap on a real
-       <a href> is not. That was proven the hard way on the main site: a
-       click handler doing preventDefault() + location.replace() looked
-       identical to a dead button, while removing it and letting the anchor
-       activate natively fixed it. Do not reintroduce a click handler here. -->
+  <!-- Both are real anchors, so long-press and non-webview taps work
+       natively. The scheme cascades only take over inside a webview. -->
   <a id="go" href="https://macrosnap.shop/">Continue to MacroSnap</a>
 
   <a id="store" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124">
@@ -77,8 +88,8 @@
   </div>
 
 <script>
-  // Name the actual app doing the blocking — more actionable than a
-  // generic warning.
+  // Name the actual app doing the blocking — "Instagram may block this link"
+  // is far more actionable than a generic warning.
   (function () {
     var ua = navigator.userAgent;
     var name = /Instagram/i.test(ua)                  ? "Instagram"
@@ -88,10 +99,36 @@
     document.getElementById("appName").textContent = name;
   })();
 
-  // Shown straight away, not gated behind a failed cascade — there's no
-  // reliable way to detect from JS whether the tap actually worked, so the
-  // fallback instruction is just always available for in-app browsers.
-  if (inApp) document.getElementById("coach").style.display = "block";
+  function cascade(list) {
+    var i = 0;
+    (function step() {
+      // Backgrounded means one of the schemes launched something — stop.
+      if (document.hidden) return;
+
+      if (i >= list.length) {
+        document.getElementById("coach").style.display = "block";
+        return;
+      }
+
+      location.href = list[i++];
+      setTimeout(step, 450);
+    })();
+  }
+
+  document.getElementById("go").addEventListener("click", function (e) {
+    if (!inApp) return;              // real browser: anchor goes to the site
+    e.preventDefault();
+    cascade(SITE_CASCADE);
+  });
+
+  document.getElementById("store").addEventListener("click", function (e) {
+    if (!inApp) return;              // real browser: anchor goes to the store
+    e.preventDefault();
+    // Remember the choice, so escaping via "Open in external browser" reloads
+    // this page as ?to=store and forwards to the App Store, not the site.
+    try { history.replaceState(null, "", "?to=store"); } catch (err) {}
+    cascade(STORE_CASCADE);
+  });
 </script>
 
 </body>
