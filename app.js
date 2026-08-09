@@ -283,12 +283,15 @@
 
   // Same escape cascade the /get page's "download on the App Store" link
   // uses: try the App Store app directly, then bounce to Chrome as a last
-  // resort. Ported over verbatim rather than redesigned.
+  // resort. NOTE: unlike /get's original version, this points straight at
+  // the App Store URL rather than routing through /get — /get is now just
+  // a copy of this homepage, so a bounce there would land back on this same
+  // page instead of the store.
   var STORE_SCHEMES = [
     "itms-appss://apps.apple.com/us/app/id6759880124",
     "itms-apps://apps.apple.com/us/app/id6759880124"
   ];
-  var CHROME_STORE = "googlechromes://macrosnap.shop/get/?to=store";
+  var CHROME_STORE = "googlechromes://apps.apple.com/us/app/id6759880124";
   var STORE_CASCADE = STORE_SCHEMES.concat([CHROME_STORE]);
 
   function cascade(list) {
@@ -318,10 +321,11 @@
 
       if (!inApp) return;
 
-      // Inside a webview: same cascade as the /get store link, verbatim.
+      // Inside a webview: same cascade as the /get store link. No
+      // ?to=store bookmark here — that only mattered when /get contained
+      // its own redirect script, which it no longer does.
       link.addEventListener("click", function (e) {
         e.preventDefault();
-        try { history.replaceState(null, "", "?to=store"); } catch (err) {}
         cascade(STORE_CASCADE);
       });
     });
