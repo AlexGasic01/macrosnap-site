@@ -230,10 +230,19 @@
   // is one — nothing else needs to change.
   var PLAY_STORE_URL = "";
 
+  // The "may block this link" banner is disabled for now — flip to true to
+  // bring it back. Everything else (markup, dismiss button, app-name
+  // detection) is untouched; this is the only line that gates it.
+  var SHOW_IAB_BANNER = false;
+
   var ua = navigator.userAgent || "";
 
   function isInAppBrowser() {
     return /Instagram/i.test(ua) || /\bFBAN\b|\bFBAV\b/i.test(ua);
+  }
+
+  function isInstagram() {
+    return /Instagram/i.test(ua);
   }
 
   function isAndroid() {
@@ -321,9 +330,14 @@
 
       if (!inApp) return;
 
-      // Inside a webview: same cascade as the /get store link. No
-      // ?to=store bookmark here — that only mattered when /get contained
-      // its own redirect script, which it no longer does.
+      // Instagram specifically gets the regular function — no cascade, no
+      // preventDefault. Target is already stripped above, so this is just
+      // a plain native tap on a plain <a href>, same as any other visitor.
+      if (isInstagram()) return;
+
+      // Other in-app browsers (Facebook etc.): same cascade as the /get
+      // store link. No ?to=store bookmark here — that only mattered when
+      // /get contained its own redirect script, which it no longer does.
       link.addEventListener("click", function (e) {
         e.preventDefault();
         cascade(STORE_CASCADE);
@@ -332,6 +346,7 @@
         // escape-hatch banner. If a scheme succeeded, the page is already
         // backgrounded by then and there's nobody left to show it to.
         window.setTimeout(function () {
+          if (!SHOW_IAB_BANNER) return;
           if (document.hidden) return;
           var note = document.getElementById("iabNote");
           if (note) note.hidden = false;
