@@ -145,9 +145,14 @@ p  { color: var(--body); }
 
 .burger { display: none; flex-direction: column; gap: 5px; padding: 8px; }
 .burger span { display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px; transition: transform .25s, opacity .25s; }
-.burger.open span:nth-child(1) { transform: rotate(45deg) translateY(7px); }
-.burger.open span:nth-child(2) { opacity: 0; }
-.burger.open span:nth-child(3) { transform: rotate(-45deg) translateY(-7px); }
+/* Translate first, then rotate. The other order rotates the axis before the
+   bar travels along it, so each bar lands ~5px off-centre diagonally and the
+   two strokes cross low and to the right instead of meeting in the middle.
+   7px = one bar height (2px) + the flex gap (5px), i.e. the distance from an
+   outer bar's centre to the middle bar's centre. */
+.burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger.open span:nth-child(2) { opacity: 0; transform: scaleX(.4); }
+.burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* ── Mobile drawer ── */
 .mobile-overlay {
@@ -461,10 +466,10 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
    between a page that has a "last updated" line and one that doesn't. */
 .static-page .page-head .lead + p { margin-top: 6px; }
 
-/* Head-to-first-card gap: 80px desktop, 60px mobile. .page-head already
-   contributes 60px / 40px of bottom padding (it carries the glow, so leave
-   it alone) — 20px on top of that lands on both targets without a query. */
-.static-page .page-head + .section { padding-top: 20px; }
+/* Head-to-first-card gap: 70px desktop, 55px mobile. .page-head already
+   contributes 60px of bottom padding here (it carries the glow, so leave it
+   alone), and 40px at the mobile breakpoint — hence the pair of values. */
+.static-page .page-head + .section { padding-top: 10px; }
 
 /* Single contact card on /support — sized so it doesn't stretch the full
    1180px wrap and read as an empty banner. */
@@ -511,6 +516,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   .phone { transform: scale(.94); }
 
   .page-head { padding: 48px 0 40px; }
+  .static-page .page-head + .section { padding-top: 15px; } /* 40 + 15 = 55 */
   .legal .card { padding: 20px 18px; }
   .cta-band { padding: 40px 24px; }
   .inc-card { padding: 16px 18px; gap: 13px; }
