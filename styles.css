@@ -331,6 +331,52 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 }
 .shot-icon svg { width: 100%; height: 100%; display: block; }
 
+/* A locked panel that found its screenshot in assets/ (see app.js) */
+.shot-media {
+  width: 100%; height: 100%; display: block;
+  object-fit: cover; object-position: top center;
+}
+
+/* ── Poll inside the "See what friends eat" panel ── */
+/* .shot is pointer-events:none so the swipe area stays clean — the panel
+   holding the poll has to opt back in, and only while it's on screen. */
+.shot.has-poll.is-active { pointer-events: auto; }
+
+.poll {
+  width: 100%; max-width: 214px; margin-top: 18px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.poll-q {
+  font-size: 12.5px; font-weight: 600; color: var(--text); text-align: center;
+}
+.poll-opts { display: flex; flex-direction: column; gap: 7px; }
+.poll-opt {
+  width: 100%; text-align: left;
+  padding: 9px 12px; border-radius: 11px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  font-size: 12px; line-height: 1.35; color: var(--body);
+  transition: background .18s, border-color .18s, color .18s, opacity .18s;
+}
+.poll-opt:hover { background: rgba(255,255,255,.11); color: var(--text); }
+.poll-opt.is-picked {
+  background: rgba(61,211,138,.14);
+  border-color: rgba(61,211,138,.45);
+  color: var(--text);
+}
+/* the tick only shows on the answer you gave */
+.poll-opt.is-picked::after {
+  content: "✓"; float: right; margin-left: 8px; color: var(--accent); font-weight: 700;
+}
+.poll.has-voted .poll-opt:not(.is-picked) { opacity: .5; }
+.poll.has-voted .poll-opt:not(.is-picked):hover {
+  background: rgba(255,255,255,.06); color: var(--body);
+}
+.poll-note { color: var(--body); text-align: center; line-height: 1.45; }
+/* while the vote is in flight, the buttons shouldn't invite a second tap */
+.poll.is-sending .poll-opt { pointer-events: none; }
+.poll.is-sending .poll-note { opacity: .65; }
+
 /* title + pill share one row, so the pill stays beside wrapped text
    instead of dropping onto its own line on narrow screens */
 .inc-title { display: flex; align-items: center; gap: 16px; }
