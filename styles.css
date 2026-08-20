@@ -451,6 +451,35 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 .footer-links button:hover, .footer-links a:hover { color: var(--text); }
 .footer-links button.muted { color: var(--subtext); }
 
+/* ═══════════════ LEGAL / STANDALONE PAGES ═══════════════ */
+/* Privacy, terms and friends live outside the SPA router, so nothing on them
+   is wrapped in .page — they carry their own entrance-animation hook. */
+.static-page .fu { animation: fadeUp .55s var(--d, 0s) var(--ease) both; }
+.static-page .page-head h1 { margin-bottom: 12px; }
+.static-page .page-head .lead { margin-bottom: 6px; }
+
+/* Single contact card on /support — sized so it doesn't stretch the full
+   1180px wrap and read as an empty banner. */
+.support-card { max-width: 520px; }
+.support-card .icon { color: var(--accent); }
+.support-card p { font-size: 14px; }
+.support-card .btn { margin-top: 20px; }
+
+.legal { display: flex; flex-direction: column; gap: 12px; max-width: 780px; }
+.legal .card { padding: 24px 26px; }
+.legal h3 { margin-bottom: 10px; }
+.legal p { font-size: 14px; line-height: 1.75; }
+.legal p + p, .legal ul + p { margin-top: 13px; }
+.legal ul {
+  margin: 13px 0 2px; padding-left: 20px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.legal li { font-size: 14px; line-height: 1.7; color: var(--body); padding-left: 4px; }
+.legal li::marker { color: var(--body); }
+.legal b { color: var(--text); font-weight: 600; }
+.legal a { color: var(--accent); transition: filter .15s; }
+.legal a:hover { text-decoration: underline; filter: brightness(1.1); }
+
 /* ═══════════════ RESPONSIVE ═══════════════ */
 @media (max-width: 1000px) {
   .contact { grid-template-columns: 1fr; }
@@ -474,6 +503,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   .phone { transform: scale(.94); }
 
   .page-head { padding: 48px 0 40px; }
+  .legal .card { padding: 20px 18px; }
   .cta-band { padding: 40px 24px; }
   .inc-card { padding: 16px 18px; gap: 13px; }
   .dots { display: flex; }
