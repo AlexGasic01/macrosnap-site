@@ -341,9 +341,12 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 /* .shot is pointer-events:none so the swipe area stays clean — the panel
    holding the poll has to opt back in, and only while it's on screen. */
 .shot.has-poll.is-active { pointer-events: auto; }
+/* the poll is the only thing in this panel, so it sits high rather than
+   centred in all that empty space */
+.shot.has-poll { justify-content: flex-start; padding-top: 150px; }
 
 .poll {
-  width: 100%; max-width: 214px; margin-top: 18px;
+  width: 100%; max-width: 214px;
   display: flex; flex-direction: column; gap: 8px;
 }
 .poll-q {
@@ -369,25 +372,20 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   content: "✓"; float: right; margin-left: 8px; color: var(--accent); font-weight: 700;
 }
 .poll.has-voted .poll-opt:not(.is-picked) { opacity: .5; }
-.poll.has-voted .poll-opt:not(.is-picked):hover {
-  background: rgba(255,255,255,.06); color: var(--body);
+
+/* Locked: in flight, or a vote already delivered from this browser. The
+   buttons are disabled too — this only stops them looking clickable. */
+.poll-opt:disabled { cursor: default; }
+.poll-opt:disabled:hover { background: rgba(255,255,255,.06); color: var(--body); }
+.poll-opt.is-picked:disabled:hover {
+  background: rgba(61,211,138,.14); color: var(--text);
 }
-.poll-note { color: var(--body); text-align: center; line-height: 1.45; }
-/* while the vote is in flight, the buttons shouldn't invite a second tap */
-.poll.is-sending .poll-opt { pointer-events: none; }
-.poll.is-sending .poll-note { opacity: .65; }
 
-/* title + pill share one row, so the pill stays beside wrapped text
-   instead of dropping onto its own line on narrow screens */
-.inc-title { display: flex; align-items: center; gap: 16px; }
-.inc-title b { min-width: 0; }
-
-.soon {
-  flex-shrink: 0;
-  background: rgba(255,255,255,.08);
-  border-radius: 999px; padding: 2px 8px;
-  font-size: 10.5px; font-weight: 600; letter-spacing: .2px;
-  color: var(--body); white-space: nowrap;
+/* holds its line whether it's empty, sending or done, so the buttons
+   above never shift */
+.poll-note {
+  min-height: 17px;
+  color: var(--body); text-align: center; line-height: 1.45;
 }
 
 .include-cards { display: flex; flex-direction: column; gap: 12px; }
