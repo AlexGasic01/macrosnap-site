@@ -343,7 +343,10 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 .shot.has-poll.is-active { pointer-events: auto; }
 /* the poll is the only thing in this panel, so it sits high rather than
    centred in all that empty space */
-.shot.has-poll { justify-content: flex-start; padding-top: 150px; }
+.shot.has-poll {
+  justify-content: flex-start; padding-top: 150px;
+  background: #1A1A1A;              /* a shade darker than the locked panels */
+}
 
 .poll {
   width: 100%; max-width: 214px;
@@ -386,6 +389,24 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 .poll-note {
   min-height: 17px;
   color: var(--body); text-align: center; line-height: 1.45;
+}
+
+/* title + pill share one row, so the pill stays beside wrapped text
+   instead of dropping onto its own line on narrow screens */
+.inc-title { display: flex; align-items: center; gap: 16px; }
+.inc-title b { min-width: 0; }
+
+.soon {
+  flex-shrink: 0;
+  background: rgba(255,255,255,.08);
+  border-radius: 999px; padding: 2px 8px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .2px;
+  color: var(--body); white-space: nowrap;
+}
+/* orange variant: this card's panel is a live poll, not a locked preview */
+.soon.is-vote {
+  background: rgba(255,148,58,.14);
+  color: #FF943A;
 }
 
 .include-cards { display: flex; flex-direction: column; gap: 12px; }
