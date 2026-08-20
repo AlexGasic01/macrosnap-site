@@ -200,9 +200,9 @@
 
   /* ── Poll inside the "See what friends eat" panel ────────
      Votes POST to Formspree. Formspree only takes submissions — there's no
-     read API — so the panel reports your own answer back and never a split
-     we can't actually see. A vote that fails to send is kept and retried on
-     the next visit. */
+     read API — so the panel never shows a split we can't actually see. One
+     delivered vote per browser: the buttons lock for good once it lands, and
+     a vote that failed to send is kept and retried on the next visit. */
 
   var POLL_ENDPOINT = "https://formspree.io/f/xqpzwolb";
 
@@ -211,12 +211,6 @@
     var key  = "ms-poll-" + id;
     var opts = poll.querySelectorAll(".poll-opt");
     var note = poll.querySelector(".poll-note");
-    var busy = false;
-
-    var THANKS = {
-      yes: "Noted — we'll tell you the day friends goes live.",
-      no:  "Noted — thanks for telling us."
-    };
 
     // { choice: "yes", sent: true } — `sent` is whether Formspree took it.
     function read() {
@@ -237,10 +231,15 @@
       });
     }
 
+    // Locked while a vote is in flight, then permanently once one lands, so
+    // nobody can sit there stuffing the ballot.
+    function lock(on) {
+      poll.classList.toggle("is-locked", on);
+      opts.forEach(function (o) { o.disabled = on; });
+    }
+
     function send(choice) {
-      if (busy) return;
-      busy = true;
-      poll.classList.add("is-sending");
+      lock(true);
       note.textContent = "Sending…";
 
       fetch(POLL_ENDPOINT, {
@@ -256,35 +255,31 @@
       }).then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         write(choice, true);
-        note.textContent = THANKS[choice];
+        note.textContent = "Response received";
       })["catch"](function () {
-        write(choice, false);            // picked up again on the next visit
-        note.textContent = "Couldn't send that — tap again to retry.";
-      }).then(function () {
-        busy = false;
-        poll.classList.remove("is-sending");
+        // Nothing landed, so hand the buttons back rather than locking the
+        // visitor out. The vote is kept and goes out again on the next visit.
+        write(choice, false);
+        note.textContent = "";
+        lock(false);
       });
     }
 
     var saved = read();
     if (saved && saved.choice) {
       paint(saved.choice);
-      if (saved.sent) note.textContent = THANKS[saved.choice];
-      else send(saved.choice);           // last visit's vote never landed
+      if (saved.sent) {
+        lock(true);
+        note.textContent = "Response received";
+      } else {
+        send(saved.choice);              // last visit's vote never landed
+      }
     }
 
     opts.forEach(function (o) {
       o.addEventListener("click", function () {
-        var choice = o.dataset.opt;
-        var prev   = read();
-        paint(choice);
-
-        // Re-tapping the answer we already delivered shouldn't file it twice.
-        if (prev && prev.sent && prev.choice === choice) {
-          note.textContent = THANKS[choice];
-          return;
-        }
-        send(choice);
+        paint(o.dataset.opt);
+        send(o.dataset.opt);
       });
     });
   });
