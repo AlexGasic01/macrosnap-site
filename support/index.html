@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" data-page="support">
+<head>
+<!-- charset must stay within the document's first 1024 bytes or browsers
+     stop looking for it. -->
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Support — MacroSnap</title>
+  <meta name="description" content="Get help with MacroSnap. Real replies, usually within a few hours on weekdays." />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+
+<!-- ══════════════════ TOP BAR ══════════════════ -->
+<!-- Links here are real hrefs rather than data-link buttons: the router in
+     app.js only paints sections that live on the current document, so from
+     this standalone page Home has to be an ordinary navigation. -->
+<nav class="nav" id="nav">
+ <div class="nav-inner">
+  <a class="nav-brand" href="../" aria-label="MacroSnap home">
+    <img class="mark" src="../assets/icon.png" width="28" height="28" alt="" />
+    <span class="wordmark">MacroSnap</span>
+  </a>
+
+  <ul class="nav-links" id="navLinks">
+    <li><a class="nav-link" href="../">Home</a></li>
+    <li><a class="nav-link active" href="./">Support</a></li>
+  </ul>
+
+  <a class="nav-cta" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">Get the App →</a>
+
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+ </div>
+</nav>
+
+<!-- ══════════════════ MOBILE DRAWER ══════════════════ -->
+<div class="mobile-overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" hidden>
+  <div class="drawer-list">
+    <a class="drawer-link" href="../">Home</a>
+    <a class="drawer-link active" href="./">Support</a>
+  </div>
+  <div class="drawer-foot">
+    <a class="btn btn-cta btn-block" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">Get the App →</a>
+  </div>
+</aside>
+
+<main id="main">
+
+  <!-- ══════════════════ PAGE: SUPPORT ══════════════════ -->
+  <section class="static-page">
+    <div class="page-head">
+      <div class="wrap">
+        <h1 class="fu" style="--d:.08s">Talk to a human</h1>
+        <p class="lead fu" style="--d:.16s">Real replies, usually within a few hours on weekdays.</p>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="card support-card fu" style="--d:0s">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+          <h3>Contact support</h3>
+          <p>Technical or payment related issues? Contact us here</p>
+          <a class="btn btn-cta" href="mailto:alex.digital200@gmail.com">Email us</a>
+        </div>
+      </div>
+    </section>
+  </section>
+
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="footer">
+ <div class="footer-inner">
+  <a class="nav-brand" href="../">
+    <img class="mark" src="../assets/icon.png" width="24" height="24" alt="" />
+    <span class="wordmark">MacroSnap</span>
+  </a>
+  <span class="tiny sub">© 2026 MacroSnap. All rights reserved.</span>
+  <ul class="footer-links">
+    <li><a href="../">Home</a></li>
+    <li><a href="./">Support</a></li>
+    <li><a href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">App Store</a></li>
+    <li><a href="../privacy/">Privacy</a></li>
+    <li><button class="muted">Terms</button></li>
+  </ul>
+ </div>
+</footer>
+
+<script src="../app.js"></script>
+</body>
+</html>
