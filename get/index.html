@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" data-page="home">
+<!-- data-support-href: where app.js forwards legacy #support links. -->
+<html lang="en" data-page="home" data-support-href="../support/">
 <head>
 <!-- charset must stay within the document's first 1024 bytes or browsers
      stop looking for it; it blocks nothing, so it sits ahead of the script. -->
@@ -26,7 +27,7 @@
 
   <ul class="nav-links" id="navLinks">
     <li><button class="nav-link" data-link="home">Home</button></li>
-    <li><button class="nav-link" data-link="support">Support</button></li>
+    <li><a class="nav-link" href="../support/">Support</a></li>
   </ul>
 
   <a class="nav-cta" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">Get the App →</a>
@@ -42,7 +43,7 @@
 <aside class="drawer" id="drawer" hidden>
   <div class="drawer-list">
     <button class="drawer-link" data-link="home">Home</button>
-    <button class="drawer-link" data-link="support">Support</button>
+    <a class="drawer-link" href="../support/">Support</a>
   </div>
   <div class="drawer-foot">
     <a class="btn btn-cta btn-block" href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">Get the App →</a>
@@ -186,7 +187,7 @@
             </ul>
             <div class="faq-btns">
               <a class="btn btn-cta" href="https://support.apple.com/en-us/118223" target="_blank" rel="noopener noreferrer">Request refund from Apple</a>
-              <button class="btn btn-soft" data-link="support">Request refund from MacroSnap</button>
+              <a class="btn btn-soft" href="../support/">Request refund from MacroSnap</a>
             </div>
           </details>
         </div>
@@ -208,54 +209,6 @@
     </section>
   </section>
 
-  <!-- ══════════════════ PAGE: SUPPORT ══════════════════ -->
-  <section class="page" data-page="support" hidden>
-    <div class="page-head">
-      <div class="wrap">
-        <h1 class="fu" style="--d:.08s">Talk to a human</h1>
-        <p class="lead fu" style="--d:.16s">Real replies, usually within a few hours on weekdays.</p>
-      </div>
-    </div>
-
-    <section class="section">
-      <div class="wrap">
-        <div class="contact">
-          <form class="card form fu" style="--d:0s" onsubmit="return false;">
-            <label>Name<input type="text" placeholder="Alex Gasic" /></label>
-            <label>Email<input type="email" placeholder="you@email.com" /></label>
-            <label>Topic
-              <select>
-                <option>General question</option>
-                <option>Billing &amp; subscriptions</option>
-                <option>A scan got it wrong</option>
-                <option>Coaching / team plans</option>
-                <option>Press</option>
-              </select>
-            </label>
-            <label>Message<textarea rows="5" placeholder="Tell us what's going on…"></textarea></label>
-            <button class="btn btn-cta btn-block" type="submit">Send message</button>
-            <span class="tiny sub center">This is a mock form — nothing is sent.</span>
-          </form>
-
-          <div class="contact-side">
-            <div class="card sm fu" style="--d:.08s">
-              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div><h3>Email</h3>
-              <p>help@macrosnap.app<br /><span class="sub tiny">Mon–Fri, 9–6 GMT</span></p>
-            </div>
-            <div class="card sm fu" style="--d:.14s">
-              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg></div><h3>Help centre</h3>
-              <p>Guides for scanning, targets, groups and export.</p>
-            </div>
-            <div class="card sm fu" style="--d:.2s">
-              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6z"/><path d="M9 7.13V6a3 3 0 1 1 6 0v1.13"/><path d="M6 13H2"/><path d="M22 13h-4"/><path d="m6.5 9-2-1.2"/><path d="m19.5 7.8-2 1.2"/><path d="m6.5 17-2 1.2"/><path d="m19.5 18.2-2-1.2"/></svg></div><h3>Report a bug</h3>
-              <p>Shake your phone inside the app to attach logs automatically.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </section>
-
 </main>
 
 <!-- ══════════════════ FOOTER ══════════════════ -->
@@ -268,9 +221,9 @@
   <span class="tiny sub">© 2026 MacroSnap. All rights reserved.</span>
   <ul class="footer-links">
     <li><button data-link="home">Home</button></li>
-    <li><button data-link="support">Support</button></li>
+    <li><a href="../support/">Support</a></li>
     <li><a href="https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124" target="_blank" rel="noopener noreferrer">App Store</a></li>
-    <li><button class="muted">Privacy</button></li>
+    <li><a href="../privacy/">Privacy</a></li>
     <li><button class="muted">Terms</button></li>
   </ul>
  </div>
