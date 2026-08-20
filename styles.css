@@ -456,7 +456,15 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
    is wrapped in .page — they carry their own entrance-animation hook. */
 .static-page .fu { animation: fadeUp .55s var(--d, 0s) var(--ease) both; }
 .static-page .page-head h1 { margin-bottom: 12px; }
-.static-page .page-head .lead { margin-bottom: 6px; }
+/* Margin sits on the line *after* the lead, not under it — otherwise it also
+   pads the bottom of the block and the head-to-card gap below drifts by 6px
+   between a page that has a "last updated" line and one that doesn't. */
+.static-page .page-head .lead + p { margin-top: 6px; }
+
+/* Head-to-first-card gap: 80px desktop, 60px mobile. .page-head already
+   contributes 60px / 40px of bottom padding (it carries the glow, so leave
+   it alone) — 20px on top of that lands on both targets without a query. */
+.static-page .page-head + .section { padding-top: 20px; }
 
 /* Single contact card on /support — sized so it doesn't stretch the full
    1180px wrap and read as an empty banner. */
