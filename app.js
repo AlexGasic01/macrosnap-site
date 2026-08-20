@@ -8,8 +8,18 @@
 (function () {
   "use strict";
 
-  var PAGES = ["home", "support"];
+  var PAGES = ["home"];
   var MOBILE_BP = 768;
+
+  // Support used to be an in-page tab reached via #support. It has its own
+  // URL now, so forward the old links before anything else runs. The target
+  // comes from the document (data-support-href) rather than being hardcoded,
+  // so a copy of the page in a sub-directory resolves it correctly.
+  var legacySupport = document.documentElement.getAttribute("data-support-href");
+  if (legacySupport && /^#\/?support$/.test(window.location.hash)) {
+    window.location.replace(legacySupport);
+    return;
+  }
 
   var pages      = document.querySelectorAll(".page");
   var navLinks   = document.querySelectorAll(".nav-link");
@@ -21,10 +31,10 @@
   var current = "home";
   var menuOpen = false;
 
-  // Hash routing (#support) rather than paths (/support): the hash never
-  // reaches the server, so deep links and refreshes work when the site is
-  // static-hosted from any sub-path — GitHub Pages project sites, a plain
-  // file:// open, whatever. No rewrite rules needed.
+  // Only the homepage is routed in-page now; support and privacy are real
+  // documents with their own URLs. Every link between pages is relative, so
+  // the site still works static-hosted from any sub-path — GitHub Pages
+  // project sites, a plain file:// open, whatever.
 
   /* ── Page switching ───────────────────────────────────── */
 
@@ -33,11 +43,13 @@
       p.hidden = p.dataset.page !== id;
     });
 
+    // Standalone pages (support, privacy) mark their own nav link active and
+    // link out with a plain href — skip those, or this would strip the class.
     navLinks.forEach(function (b) {
-      b.classList.toggle("active", b.dataset.link === id);
+      if (b.dataset.link) b.classList.toggle("active", b.dataset.link === id);
     });
     drawerLnks.forEach(function (b) {
-      b.classList.toggle("active", b.dataset.link === id);
+      if (b.dataset.link) b.classList.toggle("active", b.dataset.link === id);
     });
 
     document.documentElement.setAttribute("data-page", id);
