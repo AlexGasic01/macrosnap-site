@@ -179,6 +179,116 @@
     dot.addEventListener("click", function () { selectShot(Number(dot.dataset.shot)); });
   });
 
+  /* ── Locked panels upgrade themselves ───────────────────
+     Each locked panel names its screenshot in data-src. If the file is in
+     assets/, it swaps in; if it 404s, the "Coming soon" panel stays put.
+     So dropping include-3.png in is the whole job — no code change. */
+
+  document.querySelectorAll(".shot.is-locked[data-src]").forEach(function (panel) {
+    var probe = new Image();
+
+    probe.onload = function () {
+      probe.className = "shot-media";
+      probe.alt = panel.dataset.alt || "";
+      panel.textContent = "";            // drops the lock icon, label and poll
+      panel.appendChild(probe);
+      panel.classList.remove("is-locked", "has-poll");
+    };
+
+    probe.src = panel.dataset.src;
+  });
+
+  /* ── Poll inside the "See what friends eat" panel ────────
+     Votes POST to Formspree. Formspree only takes submissions — there's no
+     read API — so the panel reports your own answer back and never a split
+     we can't actually see. A vote that fails to send is kept and retried on
+     the next visit. */
+
+  var POLL_ENDPOINT = "https://formspree.io/f/xqpzwolb";
+
+  document.querySelectorAll(".poll").forEach(function (poll) {
+    var id   = poll.dataset.poll;
+    var key  = "ms-poll-" + id;
+    var opts = poll.querySelectorAll(".poll-opt");
+    var note = poll.querySelector(".poll-note");
+    var busy = false;
+
+    var THANKS = {
+      yes: "Noted — we'll tell you the day friends goes live.",
+      no:  "Noted — thanks for telling us."
+    };
+
+    // { choice: "yes", sent: true } — `sent` is whether Formspree took it.
+    function read() {
+      try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
+    }
+    function write(choice, sent) {
+      try {
+        localStorage.setItem(key, JSON.stringify({ choice: choice, sent: sent }));
+      } catch (e) {}                     // private mode: the vote just isn't kept
+    }
+
+    function paint(choice) {
+      poll.classList.add("has-voted");
+      opts.forEach(function (o) {
+        var on = o.dataset.opt === choice;
+        o.classList.toggle("is-picked", on);
+        o.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+
+    function send(choice) {
+      if (busy) return;
+      busy = true;
+      poll.classList.add("is-sending");
+      note.textContent = "Sending…";
+
+      fetch(POLL_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          poll: id,
+          answer: choice,
+          question: "Would you use friends?",
+          page: location.pathname,
+          _subject: "MacroSnap poll — " + id + ": " + choice
+        })
+      }).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        write(choice, true);
+        note.textContent = THANKS[choice];
+      })["catch"](function () {
+        write(choice, false);            // picked up again on the next visit
+        note.textContent = "Couldn't send that — tap again to retry.";
+      }).then(function () {
+        busy = false;
+        poll.classList.remove("is-sending");
+      });
+    }
+
+    var saved = read();
+    if (saved && saved.choice) {
+      paint(saved.choice);
+      if (saved.sent) note.textContent = THANKS[saved.choice];
+      else send(saved.choice);           // last visit's vote never landed
+    }
+
+    opts.forEach(function (o) {
+      o.addEventListener("click", function () {
+        var choice = o.dataset.opt;
+        var prev   = read();
+        paint(choice);
+
+        // Re-tapping the answer we already delivered shouldn't file it twice.
+        if (prev && prev.sent && prev.choice === choice) {
+          note.textContent = THANKS[choice];
+          return;
+        }
+        send(choice);
+      });
+    });
+  });
+
   if (phone) {
     var startX = null, startY = null;
 
