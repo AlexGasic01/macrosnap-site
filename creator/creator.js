@@ -17,7 +17,10 @@
 
   var SUPABASE_URL  = "";                 // https://<project>.supabase.co
   var SUPABASE_ANON = "";                 // anon / publishable key
-  var COMMISSION_RATE = 0.20;             // the creator's cut of revenue_usd
+  // Per-creator rates live in the creator_rates table (see SETUP.md), as a
+  // percentage: 20 means 20%. This is the fallback for a creator with no row
+  // there, and for when that table doesn't exist yet.
+  var DEFAULT_COMMISSION_PCT = 20;
   var APPSTORE_URL  =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
@@ -105,6 +108,35 @@
     });
   }
 
+  // The rate is a separate lookup rather than a column on the view, because
+  // referral_counts is a view — there is nothing to add a column to. A missing
+  // table, a missing row or a bad value all fall back to the default rather
+  // than failing the page: a creator seeing their numbers with a default rate
+  // beats a creator seeing an error.
+  function loadRate(code) {
+    var url = SUPABASE_URL + "/rest/v1/creator_rates"
+            + "?select=commission_pct"
+            + "&code=ilike." + encodeURIComponent(code)
+            + "&limit=1";
+
+    return fetch(url, {
+      headers: {
+        "apikey": SUPABASE_ANON,
+        "Authorization": "Bearer " + SUPABASE_ANON,
+        "Accept": "application/json"
+      }
+    }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (rows) {
+      var value = rows && rows[0] && rows[0].commission_pct;
+      var n = Number(value);
+      return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
+    })["catch"](function () {
+      return DEFAULT_COMMISSION_PCT;
+    });
+  }
+
   /* ── Paint ────────────────────────────────────────────── */
 
   function num(v) {
@@ -122,7 +154,13 @@
     return "$" + Number(v).toFixed(2);
   }
 
-  function paint(row) {
+  // Trailing .0 reads like false precision on a rate someone set by hand:
+  // 20 shows as "20%", 17.5 keeps its half.
+  function rate(pctValue) {
+    return String(Math.round(pctValue * 10) / 10) + "%";
+  }
+
+  function paint(row, commissionPct) {
     currentCode = row.code;
 
     document.getElementById("crName").textContent = row.name || "there";
@@ -135,15 +173,20 @@
     // Commission is worked out here, not in the database.
     var earned = row.revenue_usd === null || row.revenue_usd === undefined
                ? null
-               : Number(row.revenue_usd) * COMMISSION_RATE;
+               : Number(row.revenue_usd) * (commissionPct / 100);
     document.getElementById("crEarned").textContent = money(earned);
+    document.getElementById("crRateNote").textContent =
+      "Your rate is " + rate(commissionPct) + " · paid monthly";
 
     show("dash");
   }
 
   function go(code) {
     show("loading");
-    loadStats(code).then(function (row) {
+    // The rate resolves to a default rather than rejecting, so the pair only
+    // fails when the stats themselves fail.
+    Promise.all([loadStats(code), loadRate(code)]).then(function (both) {
+      var row = both[0], commissionPct = both[1];
       if (!row) {
         forget();
         fail("Code not recognised",
@@ -151,7 +194,7 @@
         return;
       }
       remember(row.code);
-      paint(row);
+      paint(row, commissionPct);
     })["catch"](function () {
       fail("Couldn't reach the server",
            "Something went wrong loading your numbers. Try again in a minute.");

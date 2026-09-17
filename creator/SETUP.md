@@ -3,9 +3,9 @@
 One step: fill in two values at the top of `creator.js`.
 
 ```js
-var SUPABASE_URL    = "https://<project>.supabase.co";
-var SUPABASE_ANON   = "<anon key>";
-var COMMISSION_RATE = 0.20;              // change to your rate
+var SUPABASE_URL           = "https://<project>.supabase.co";
+var SUPABASE_ANON          = "<anon key>";
+var DEFAULT_COMMISSION_PCT = 20;         // used when a creator has no rate row
 ```
 
 The page reads the `referral_counts` view directly:
@@ -14,8 +14,41 @@ The page reads the `referral_counts` view directly:
 GET /rest/v1/referral_counts?select=name,code,code_inputs,purchases,conversion_pct,revenue_usd&code=ilike.<code>&limit=1
 ```
 
-Commission is worked out in the page — `revenue_usd * COMMISSION_RATE` — so
-nothing in Supabase needs changing to alter the rate.
+Commission is worked out in the page — `revenue_usd * commission_pct / 100`.
+
+## Per-creator rates
+
+`referral_counts` is a view, so there is no column to add a rate to. The rate
+lives in its own small table instead, which the page fetches alongside the
+stats:
+
+```sql
+create table if not exists public.creator_rates (
+  code           text primary key,
+  commission_pct numeric not null default 20,
+  note           text
+);
+
+grant select on public.creator_rates to anon;
+
+insert into public.creator_rates (code, commission_pct) values
+  ('ALEX2509', 20),
+  ('BANGA',    25)
+on conflict (code) do update set commission_pct = excluded.commission_pct;
+```
+
+**`commission_pct` is a percentage, not a fraction**: `20` means 20%, and
+`17.5` works too. Putting `0.2` in there would pay out 0.2%.
+
+After that, changing someone's rate is editing one cell in the Supabase table
+editor. No deploy, no code change.
+
+Rates are optional — until the table exists, every creator falls back to
+`DEFAULT_COMMISSION_PCT`, and so does anyone without a row in it. The page
+never fails over a missing rate.
+
+The `note` column is there for your own reference (why this creator is on a
+different rate); the page never reads it.
 
 ## Requirement
 
