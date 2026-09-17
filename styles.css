@@ -555,11 +555,104 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 .legal a { color: var(--accent); transition: filter .15s; }
 .legal a:hover { text-decoration: underline; filter: brightness(1.1); }
 
+
+/* ═══════════════ CREATOR DASHBOARD ═══════════════ */
+/* Private page at /creator/ — the nav here carries the brand and a label
+   rather than the site's links, so it doesn't invite a wander back out. */
+.nav-divider {
+  width: 1px; height: 20px; flex-shrink: 0;
+  margin: 0 13px;
+  background: var(--border-bright);
+}
+.nav-label { font-size: 13px; font-weight: 500; letter-spacing: -0.1px; color: var(--body); }
+.nav-spacer { flex: 1; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* Loading, gate and error states share a centred single-card layout. The
+   min-height keeps the footer off the middle of the screen on these short
+   states — without it the page ends a third of the way down. */
+.creator-centre {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 62vh;
+}
+.creator-gate { max-width: 420px; width: 100%; text-align: center; }
+.creator-gate .icon { color: var(--accent); margin-left: auto; margin-right: auto; }
+.creator-gate p { font-size: 14px; }
+.creator-gate .btn { margin-top: 4px; }
+
+.creator-gate-form { margin-top: 20px; gap: 12px; }
+/* Codes are short and shouty — centring them stops the field reading as a
+   half-empty email input. */
+.creator-gate-form input {
+  text-align: center;
+  font-size: 17px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.creator-gate-form input::placeholder { letter-spacing: 1.5px; text-transform: uppercase; }
+.creator-gate-note:empty { display: none; }
+.creator-gate-note { margin-top: 12px; }
+
+.creator-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+/* The site h1 tops out at 66px, which is a marketing headline. A greeting on
+   a page someone checks weekly wants to be quieter than the numbers below it. */
+.creator-head h1 { font-size: clamp(30px, 3.4vw, 42px); letter-spacing: -1.4px; }
+.creator-head .lead b { color: var(--text); font-weight: 600; }
+.creator-signout { flex-shrink: 0; font-size: 13px; padding: 9px 16px; }
+
+/* ── Code card ── */
+.code-card {
+  background: var(--card);
+  border-radius: 22px; padding: 30px 34px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 28px;
+  background-image: radial-gradient(ellipse 45% 130% at 12% 0%, rgba(61,211,138,.16), transparent 70%);
+}
+.code-card-main { display: flex; flex-direction: column; gap: 6px; }
+.code-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.7px;
+  text-transform: uppercase; color: var(--body);
+}
+.code-value {
+  font-size: 46px; font-weight: 700; letter-spacing: 1.5px;
+  line-height: 1; color: var(--accent);
+}
+.code-card-actions {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
+  max-width: 280px;
+}
+.code-card-actions .tiny { line-height: 1.5; }
+
+/* ── Stats ── */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px; margin-top: 16px;
+}
+.stat {
+  background: var(--card);
+  border-radius: 16px; padding: 22px 24px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.stat-label { font-size: 12.5px; font-weight: 600; letter-spacing: -0.1px; color: var(--body); }
+.stat-value {
+  font-size: 34px; font-weight: 600; letter-spacing: -1.4px;
+  line-height: 1.1; color: var(--text);
+}
+.stat-note { line-height: 1.5; }
+
+.creator-foot-note { display: block; margin-top: 22px; }
+.creator-foot-note a { color: var(--accent); }
+.creator-foot-note a:hover { text-decoration: underline; }
 /* ═══════════════ RESPONSIVE ═══════════════ */
 @media (max-width: 1000px) {
   .contact { grid-template-columns: 1fr; }
   .include { grid-template-columns: 1fr; gap: 40px; justify-items: center; }
   .include-cards { width: 100%; max-width: 560px; }
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {
@@ -583,4 +676,15 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   .cta-band { padding: 40px 24px; }
   .inc-card { padding: 16px 18px; gap: 13px; }
   .dots { display: flex; }
+
+  /* Creator dashboard. The code stays the biggest thing on the screen, but
+     46px overflows a 320px viewport once letter-spacing is counted. */
+  .nav-label, .nav-divider { display: none; }
+  .code-card { padding: 24px 22px; gap: 20px; }
+  .code-value { font-size: 38px; }
+  .code-card-actions { max-width: none; width: 100%; }
+  .code-card-actions .btn { width: 100%; }
+  .creator-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .stat { padding: 18px 20px; }
+  .stat-value { font-size: 30px; }
 }

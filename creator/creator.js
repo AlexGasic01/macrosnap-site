@@ -1,0 +1,211 @@
+/* ═══════════════════════════════════════════════════════════
+   MacroSnap — creator dashboard
+
+   Reads one creator's own row out of Supabase and paints it. The three
+   values below are the only configuration; see SETUP.md in this folder for
+   the SQL that creates the function this calls.
+
+   Why an RPC and not a table read: the anon key below ships in this file and
+   is public by design. A direct table read with it would let anyone list
+   every creator's row. creator_stats() returns a single row for the code it
+   is given and never returns revenue or sandbox columns at all.
+   ═══════════════════════════════════════════════════════════ */
+
+(function () {
+  "use strict";
+
+  /* ── Configuration ────────────────────────────────────── */
+
+  var SUPABASE_URL  = "";                 // https://<project>.supabase.co
+  var SUPABASE_ANON = "";                 // anon / publishable key
+  var APPSTORE_URL  =
+    "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
+
+  var STORE_KEY = "ms-creator-code";
+
+  /* ── Elements ─────────────────────────────────────────── */
+
+  var views = {
+    loading: document.getElementById("crLoading"),
+    gate:    document.getElementById("crGate"),
+    dash:    document.getElementById("crDash"),
+    error:   document.getElementById("crError")
+  };
+
+  var gateForm  = document.getElementById("crGateForm");
+  var codeInput = document.getElementById("crCodeInput");
+  var gateNote  = document.getElementById("crGateNote");
+  var shareBtn  = document.getElementById("crShare");
+  var shareNote = document.getElementById("crShareNote");
+  var signOut   = document.getElementById("crSignOut");
+  var retry     = document.getElementById("crRetry");
+
+  var currentCode = "";
+
+  function show(name) {
+    Object.keys(views).forEach(function (k) {
+      if (views[k]) views[k].hidden = k !== name;
+    });
+  }
+
+  function fail(title, body) {
+    document.getElementById("crErrorTitle").textContent = title;
+    document.getElementById("crErrorBody").textContent = body;
+    show("error");
+  }
+
+  /* ── Where the code comes from ────────────────────────────
+     The fragment, not a query string: fragments are never sent in Referer
+     headers and never reach a server log, so the link survives being tapped
+     through to the App Store. Both /creator/#ALEX2509 and
+     /creator/#code=ALEX2509 work — the emailed links use the short form. */
+
+  function codeFromHash() {
+    var raw = window.location.hash.replace(/^#/, "");
+    if (!raw) return "";
+    var viaParam = new URLSearchParams(raw).get("code");
+    var code = viaParam || raw;
+    return /^[A-Za-z0-9_-]{1,40}$/.test(code) ? code.toUpperCase() : "";
+  }
+
+  function remembered() {
+    try { return localStorage.getItem(STORE_KEY) || ""; } catch (e) { return ""; }
+  }
+  function remember(code) {
+    try { localStorage.setItem(STORE_KEY, code); } catch (e) {}   // private mode
+  }
+  function forget() {
+    try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  }
+
+  /* ── Fetch ────────────────────────────────────────────── */
+
+  function loadStats(code) {
+    return fetch(SUPABASE_URL + "/rest/v1/rpc/creator_stats", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_ANON,
+        "Authorization": "Bearer " + SUPABASE_ANON,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ p_code: code })
+    }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (rows) {
+      return (rows && rows[0]) || null;      // null = no such code
+    });
+  }
+
+  /* ── Paint ────────────────────────────────────────────── */
+
+  function num(v) {
+    return typeof v === "number" ? v.toLocaleString() : "0";
+  }
+
+  // conversion_pct is null whenever nobody has entered the code yet — 0/0 is
+  // not 0%, it is "nothing to divide". Show a dash rather than a made-up zero.
+  function pct(v) {
+    return v === null || v === undefined ? "—" : Number(v).toFixed(1) + "%";
+  }
+
+  function money(v) {
+    if (v === null || v === undefined) return "—";
+    return "$" + Number(v).toFixed(2);
+  }
+
+  function paint(row) {
+    currentCode = row.code;
+
+    document.getElementById("crName").textContent = row.name || "there";
+    document.getElementById("crCode").textContent = row.code;
+    document.getElementById("crUses").textContent = num(row.code_inputs);
+    document.getElementById("crUsesInline").textContent = num(row.code_inputs);
+    document.getElementById("crPurchases").textContent = num(row.purchases);
+    document.getElementById("crConversion").textContent = pct(row.conversion_pct);
+    document.getElementById("crEarned").textContent = money(row.earnings_usd);
+
+    show("dash");
+  }
+
+  function go(code) {
+    show("loading");
+    loadStats(code).then(function (row) {
+      if (!row) {
+        forget();
+        fail("Code not recognised",
+             "Check it against the email we sent you — codes are case-insensitive but have to match exactly.");
+        return;
+      }
+      remember(row.code);
+      paint(row);
+    })["catch"](function () {
+      fail("Couldn't reach the server",
+           "Something went wrong loading your numbers. Try again in a minute.");
+    });
+  }
+
+  /* ── Wiring ───────────────────────────────────────────── */
+
+  if (gateForm) {
+    gateForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var code = (codeInput.value || "").trim().toUpperCase();
+      if (!code) return;
+      gateNote.textContent = "";
+      go(code);
+    });
+  }
+
+  if (shareBtn) {
+    shareBtn.addEventListener("click", function () {
+      var message = "Get MacroSnap and use my code " + currentCode +
+                    " when you sign up — " + APPSTORE_URL;
+      var done = function () { shareNote.textContent = "Copied."; };
+      var nope = function () { shareNote.textContent = "Couldn't copy — select it by hand: " + message; };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(done)["catch"](nope);
+      } else {
+        nope();
+      }
+    });
+  }
+
+  if (signOut) {
+    signOut.addEventListener("click", function () {
+      forget();
+      if (window.location.hash) {
+        // Drop the code from the URL without leaving a history entry behind.
+        history.replaceState(null, "", window.location.pathname);
+      }
+      codeInput.value = "";
+      show("gate");
+    });
+  }
+
+  if (retry) {
+    retry.addEventListener("click", function () {
+      forget();
+      history.replaceState(null, "", window.location.pathname);
+      codeInput.value = "";
+      show("gate");
+    });
+  }
+
+  /* ── Start ────────────────────────────────────────────── */
+
+  if (!SUPABASE_URL || !SUPABASE_ANON) {
+    fail("Not configured yet",
+         "SUPABASE_URL and SUPABASE_ANON still need filling in at the top of creator.js.");
+    return;
+  }
+
+  var initial = codeFromHash() || remembered();
+  if (initial) {
+    go(initial);
+  } else {
+    show("gate");
+  }
+})();

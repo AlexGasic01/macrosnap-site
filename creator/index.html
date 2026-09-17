@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-page="creator">
+<head>
+<!-- charset must stay within the document's first 1024 bytes or browsers
+     stop looking for it. -->
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <!-- The code sits in the URL fragment. noindex keeps the page out of search
+       results; no-referrer stops the fragment travelling to the App Store. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Creator dashboard — MacroSnap</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+
+<!-- ══════════════════ TOP BAR ══════════════════ -->
+<!-- Deliberately not the site nav: this is a private page, so it carries the
+     brand and nothing that invites a wander back into the marketing site. -->
+<nav class="nav" id="nav">
+ <div class="nav-inner">
+  <a class="nav-brand" href="../" aria-label="MacroSnap home">
+    <img class="mark" src="../assets/icon.png" width="28" height="28" alt="" />
+    <span class="wordmark">MacroSnap</span>
+  </a>
+  <span class="nav-divider" aria-hidden="true"></span>
+  <span class="nav-label">Creator dashboard</span>
+  <span class="nav-spacer"></span>
+  <a class="nav-link" href="../support/">Need help?</a>
+ </div>
+</nav>
+
+<main id="main">
+ <section class="static-page">
+
+  <!-- ══════════ LOADING ══════════ -->
+  <div class="section creator-centre" id="crLoading">
+    <span class="tiny sub">Loading your numbers…</span>
+  </div>
+
+  <!-- ══════════ GATE — no code in the URL ══════════ -->
+  <div class="section creator-centre" id="crGate" hidden>
+    <div class="card creator-gate fu" style="--d:0s">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5.5v2M13 11v2M13 16.5v2"/></svg></div>
+      <h3>Enter your creator code</h3>
+      <p>The one we sent you when you joined the program.</p>
+      <form class="form creator-gate-form" id="crGateForm">
+        <label>
+          <span class="visually-hidden">Creator code</span>
+          <input id="crCodeInput" type="text" name="code" placeholder="ALEX2509" autocomplete="off"
+                 autocapitalize="characters" spellcheck="false" required />
+        </label>
+        <button class="btn btn-cta btn-block" type="submit">View my dashboard</button>
+      </form>
+      <p class="tiny sub creator-gate-note" id="crGateNote" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <!-- ══════════ DASHBOARD ══════════ -->
+  <div id="crDash" hidden>
+
+    <div class="page-head">
+      <div class="wrap creator-head">
+        <div>
+          <h1 class="fu" style="--d:.04s">Hey <span id="crName">there</span></h1>
+          <p class="lead fu" style="--d:.1s">
+            Your code has been entered <b id="crUsesInline">0</b> times.
+          </p>
+        </div>
+        <button class="btn btn-soft creator-signout" id="crSignOut" type="button">Not you?</button>
+      </div>
+    </div>
+
+    <section class="section">
+      <div class="wrap">
+
+        <!-- CODE CARD -->
+        <div class="code-card fu" style="--d:0s">
+          <div class="code-card-main">
+            <span class="code-label">Your code</span>
+            <span class="code-value" id="crCode">—</span>
+          </div>
+          <div class="code-card-actions">
+            <button class="btn btn-cta" id="crShare" type="button">Copy share message</button>
+            <span class="tiny sub" id="crShareNote" role="status" aria-live="polite">Copies a ready-made caption with your code and the App Store link.</span>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stat-grid fu" style="--d:.06s">
+          <div class="stat">
+            <span class="stat-label">Code entered</span>
+            <span class="stat-value" id="crUses">0</span>
+            <span class="stat-note tiny sub">People who typed it in the app</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Purchases</span>
+            <span class="stat-value" id="crPurchases">0</span>
+            <span class="stat-note tiny sub">Subscriptions started with your code</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Conversion</span>
+            <span class="stat-value" id="crConversion">—</span>
+            <span class="stat-note tiny sub">Of everyone who entered it</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Earned</span>
+            <span class="stat-value" id="crEarned">—</span>
+            <span class="stat-note tiny sub">Paid out monthly</span>
+          </div>
+        </div>
+
+        <p class="tiny sub creator-foot-note fu" style="--d:.1s">
+          Numbers refresh when you reload. Something look wrong?
+          <a href="../support/">Let us know</a>.
+        </p>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- ══════════ NOT FOUND ══════════ -->
+  <div class="section creator-centre" id="crError" hidden>
+    <div class="card creator-gate fu" style="--d:0s">
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg></div>
+      <h3 id="crErrorTitle">Code not recognised</h3>
+      <p id="crErrorBody">Check it against the email we sent you — codes are case-insensitive but have to match exactly.</p>
+      <button class="btn btn-soft btn-block" id="crRetry" type="button">Try another code</button>
+    </div>
+  </div>
+
+ </section>
+</main>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="footer">
+ <div class="footer-inner">
+  <a class="nav-brand" href="../">
+    <img class="mark" src="../assets/icon.png" width="24" height="24" alt="" />
+    <span class="wordmark">MacroSnap</span>
+  </a>
+  <span class="tiny sub">© 2026 MacroSnap. All rights reserved.</span>
+  <ul class="footer-links">
+    <li><a href="../">Home</a></li>
+    <li><a href="../support/">Support</a></li>
+    <li><a href="../privacy/">Privacy</a></li>
+  </ul>
+ </div>
+</footer>
+
+<script src="creator.js"></script>
+</body>
+</html>
