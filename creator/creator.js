@@ -1,14 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    MacroSnap — creator dashboard
 
-   Reads one creator's own row out of Supabase and paints it. The three
-   values below are the only configuration; see SETUP.md in this folder for
-   the SQL that creates the function this calls.
+   Reads a creator's row straight out of the referral_counts view and paints
+   it. Configuration is the values below — no SQL to run, as long as the anon
+   role can select from the view.
 
-   Why an RPC and not a table read: the anon key below ships in this file and
-   is public by design. A direct table read with it would let anyone list
-   every creator's row. creator_stats() returns a single row for the code it
-   is given and never returns revenue or sandbox columns at all.
+   Note that the anon key ships in this file and is public by design, so the
+   view is readable by anyone who opens the page: the code in the URL picks
+   which row to show, it does not limit which rows are reachable.
    ═══════════════════════════════════════════════════════════ */
 
 (function () {
@@ -18,6 +17,7 @@
 
   var SUPABASE_URL  = "";                 // https://<project>.supabase.co
   var SUPABASE_ANON = "";                 // anon / publishable key
+  var COMMISSION_RATE = 0.20;             // the creator's cut of revenue_usd
   var APPSTORE_URL  =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
@@ -80,16 +80,23 @@
 
   /* ── Fetch ────────────────────────────────────────────── */
 
+  // Named columns rather than *, so a column added to the view later doesn't
+  // start arriving here unnoticed. ilike with no wildcards is an exact match
+  // that ignores case, so a creator typing "alex2509" still lands on the row.
+  var COLUMNS = "name,code,code_inputs,purchases,conversion_pct,revenue_usd";
+
   function loadStats(code) {
-    return fetch(SUPABASE_URL + "/rest/v1/rpc/creator_stats", {
-      method: "POST",
+    var url = SUPABASE_URL + "/rest/v1/referral_counts"
+            + "?select=" + encodeURIComponent(COLUMNS)
+            + "&code=ilike." + encodeURIComponent(code)
+            + "&limit=1";
+
+    return fetch(url, {
       headers: {
         "apikey": SUPABASE_ANON,
         "Authorization": "Bearer " + SUPABASE_ANON,
-        "Content-Type": "application/json",
         "Accept": "application/json"
-      },
-      body: JSON.stringify({ p_code: code })
+      }
     }).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
@@ -124,7 +131,12 @@
     document.getElementById("crUsesInline").textContent = num(row.code_inputs);
     document.getElementById("crPurchases").textContent = num(row.purchases);
     document.getElementById("crConversion").textContent = pct(row.conversion_pct);
-    document.getElementById("crEarned").textContent = money(row.earnings_usd);
+
+    // Commission is worked out here, not in the database.
+    var earned = row.revenue_usd === null || row.revenue_usd === undefined
+               ? null
+               : Number(row.revenue_usd) * COMMISSION_RATE;
+    document.getElementById("crEarned").textContent = money(earned);
 
     show("dash");
   }
