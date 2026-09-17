@@ -7,8 +7,8 @@ Two steps: run the SQL once, then fill in two values in `creator.js`.
 Paste this into the Supabase SQL editor. It **does not alter your table** — it
 adds one read-only function next to it, so the app's writes are untouched.
 
-> Change `influencers` to your actual table name, and `0.20` to your
-> commission rate.
+> Change `0.20` to your commission rate. The source is `referral_counts`,
+> which is a **view**, not a table — see the note below on what that means.
 
 ```sql
 create or replace function public.creator_stats(p_code text)
@@ -36,7 +36,7 @@ as $$
          then round(i.purchases::numeric * 100 / i.code_inputs, 1)
     end,
     round(coalesce(i.revenue_usd, 0) * 0.20, 2)      -- commission rate
-  from influencers i
+  from referral_counts i
   where upper(i.code) = upper(p_code)
   limit 1;
 $$;
@@ -76,17 +76,45 @@ code is remembered in `localStorage` afterwards.
 
 ## Before you send anyone a link
 
-**Check whether RLS is enabled on the table.** If it is off, the anon key can
-already read every row directly, function or no function — Supabase flags this
-as "RLS disabled in public schema" on the table list.
+`referral_counts` is a view (the eye icon on its tab in the Supabase editor),
+which matters here for one specific reason: **a view reads its underlying
+tables as the view's owner, not as the caller.** So row-level security on the
+base tables does not protect the view. If `anon` can select from
+`referral_counts`, it can read every creator's row — RLS or no RLS.
 
-Turning it on is a separate decision, because **it will break the app's writes
-if the app authenticates with the anon key**. Check that first:
+Check who can:
 
-- App writes with the **service role key** (server-side) → RLS is safe to
-  enable, and the app carries on working.
-- App writes with the **anon key** → enable RLS *and* add an insert/update
-  policy covering what the app does, or the code tracking stops recording.
+```sql
+select grantee, privilege_type
+from information_schema.role_table_grants
+where table_name = 'referral_counts';
+```
+
+If `anon` is in that list, close it:
+
+```sql
+revoke all on public.referral_counts from anon, authenticated;
+```
+
+That leaves `creator_stats()` as the only way in, which is the point of the
+function. It **cannot break the app's writes**: this is an aggregate view and
+nothing writes to it — the app writes to the tables underneath, which this
+does not touch. The only thing to check first is whether anything *else* reads
+the view with the anon key (another page, a no-code tool); those would need
+the same treatment.
+
+RLS on the base tables is a separate question, and the one with teeth: turning
+it on **will stop the app recording code uses if the app writes with the anon
+key**. If the app writes with the service role key, RLS is safe to enable and
+the app carries on working. Worth settling, but it is not needed for this
+page.
+
+## If the function errors on type mismatch
+
+`returns table (... code_inputs int, purchases int ...)` has to match what the
+view actually produces. A view built on `count()` yields `bigint`, not `int` —
+the editor showed `int4`, so this should be fine, but if Postgres complains
+about a return type, change those two to `bigint` and it will match.
 
 ## What this version does not show
 
