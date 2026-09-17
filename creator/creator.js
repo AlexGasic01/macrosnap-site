@@ -17,9 +17,14 @@
 
   var SUPABASE_URL  = "";                 // https://<project>.supabase.co
   var SUPABASE_ANON = "";                 // anon / publishable key
-  // Per-creator rates live in the creator_rates table (see SETUP.md), as a
-  // percentage: 20 means 20%. This is the fallback for a creator with no row
-  // there, and for when that table doesn't exist yet.
+  // referral_dashboard is referral_counts with the creator's rate joined on
+  // (see SETUP.md). To go back to reading referral_counts directly, set this
+  // to "referral_counts" and drop commission_pct from COLUMNS below — every
+  // creator then falls back to DEFAULT_COMMISSION_PCT.
+  var SOURCE_VIEW = "referral_dashboard";
+
+  // A percentage, not a fraction: 20 means 20%. Used when the row carries no
+  // rate of its own.
   var DEFAULT_COMMISSION_PCT = 20;
   var APPSTORE_URL  =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
@@ -86,10 +91,11 @@
   // Named columns rather than *, so a column added to the view later doesn't
   // start arriving here unnoticed. ilike with no wildcards is an exact match
   // that ignores case, so a creator typing "alex2509" still lands on the row.
-  var COLUMNS = "name,code,code_inputs,purchases,conversion_pct,revenue_usd";
+  var COLUMNS =
+    "name,code,code_inputs,purchases,conversion_pct,revenue_usd,commission_pct";
 
   function loadStats(code) {
-    var url = SUPABASE_URL + "/rest/v1/referral_counts"
+    var url = SUPABASE_URL + "/rest/v1/" + SOURCE_VIEW
             + "?select=" + encodeURIComponent(COLUMNS)
             + "&code=ilike." + encodeURIComponent(code)
             + "&limit=1";
@@ -108,33 +114,17 @@
     });
   }
 
-  // The rate is a separate lookup rather than a column on the view, because
-  // referral_counts is a view — there is nothing to add a column to. A missing
-  // table, a missing row or a bad value all fall back to the default rather
-  // than failing the page: a creator seeing their numbers with a default rate
-  // beats a creator seeing an error.
-  function loadRate(code) {
-    var url = SUPABASE_URL + "/rest/v1/creator_rates"
-            + "?select=commission_pct"
-            + "&code=ilike." + encodeURIComponent(code)
-            + "&limit=1";
-
-    return fetch(url, {
-      headers: {
-        "apikey": SUPABASE_ANON,
-        "Authorization": "Bearer " + SUPABASE_ANON,
-        "Accept": "application/json"
-      }
-    }).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    }).then(function (rows) {
-      var value = rows && rows[0] && rows[0].commission_pct;
-      var n = Number(value);
-      return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
-    })["catch"](function () {
+  // A row with no usable rate falls back to the default rather than failing:
+  // a creator seeing their numbers at the default rate beats an error page.
+  function rateOf(row) {
+    var raw = row.commission_pct;
+    // Absent must be caught before Number(): Number(null) and Number("") are
+    // both 0, which would read as a deliberate 0% and pay the creator nothing.
+    if (raw === null || raw === undefined || raw === "") {
       return DEFAULT_COMMISSION_PCT;
-    });
+    }
+    var n = Number(raw);
+    return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
   }
 
   /* ── Paint ────────────────────────────────────────────── */
@@ -160,7 +150,8 @@
     return String(Math.round(pctValue * 10) / 10) + "%";
   }
 
-  function paint(row, commissionPct) {
+  function paint(row) {
+    var commissionPct = rateOf(row);
     currentCode = row.code;
 
     document.getElementById("crName").textContent = row.name || "there";
@@ -183,10 +174,7 @@
 
   function go(code) {
     show("loading");
-    // The rate resolves to a default rather than rejecting, so the pair only
-    // fails when the stats themselves fail.
-    Promise.all([loadStats(code), loadRate(code)]).then(function (both) {
-      var row = both[0], commissionPct = both[1];
+    loadStats(code).then(function (row) {
       if (!row) {
         forget();
         fail("Code not recognised",
@@ -194,7 +182,7 @@
         return;
       }
       remember(row.code);
-      paint(row, commissionPct);
+      paint(row);
     })["catch"](function () {
       fail("Couldn't reach the server",
            "Something went wrong loading your numbers. Try again in a minute.");

@@ -29,6 +29,18 @@ insert into public.creator_rates (code, commission_pct) values
   ('ALEX2509', 20),
   ('BANGA',    25)
 on conflict (code) do update set commission_pct = excluded.commission_pct;
+
+-- referral_counts plus the creator's rate, as one object. This is what the
+-- page reads. Wrapping rather than editing referral_counts means nothing that
+-- already depends on that view can break.
+create or replace view public.referral_dashboard as
+select
+  c.*,
+  coalesce(r.commission_pct, 20) as commission_pct
+from public.referral_counts c
+left join public.creator_rates r on upper(r.code) = upper(c.code);
+
+grant select on public.referral_dashboard to anon;
 ```
 
 The RLS lines only apply to the new `creator_rates` table — they exist so
@@ -49,19 +61,49 @@ var SUPABASE_ANON          = "<anon key>";
 var DEFAULT_COMMISSION_PCT = 20;         // used when a creator has no rate row
 ```
 
-The page reads the `referral_counts` view directly:
+The page reads `referral_dashboard` in one request:
 
 ```
-GET /rest/v1/referral_counts?select=name,code,code_inputs,purchases,conversion_pct,revenue_usd&code=ilike.<code>&limit=1
+GET /rest/v1/referral_dashboard?select=name,code,code_inputs,purchases,conversion_pct,revenue_usd,commission_pct&code=ilike.<code>&limit=1
 ```
 
 Commission is worked out in the page — `revenue_usd * commission_pct / 100`.
 
 ## Per-creator rates
 
-`referral_counts` is a view, so there is no column to add a rate to. The rate
-lives in its own small table instead (created in step 1), which the page
-fetches alongside the stats.
+`referral_counts` is a view, so there is no column on it to hang a rate on.
+The rate lives in `creator_rates`, and `referral_dashboard` joins the two so
+the page still makes a single request.
+
+### Editing referral_counts itself instead
+
+If you would rather the column sat on `referral_counts` — skipping
+`referral_dashboard` and setting `SOURCE_VIEW` back to `"referral_counts"` —
+read its current definition first:
+
+```sql
+select pg_get_viewdef('public.referral_counts', true);
+```
+
+Then re-create it with that definition plus the join. Three rules, or it will
+fail or quietly lose data:
+
+- **`left join`, not `join`.** An inner join drops every creator who has no
+  row in `creator_rates` — they would vanish from the view entirely.
+- **The new column goes last.** `create or replace view` can append a column
+  but cannot insert one in the middle, rename one, or change a type.
+- **Every existing column stays, in its existing order**, for the same reason.
+
+```sql
+create or replace view public.referral_counts as
+select
+  <the existing select list, unchanged and in order>,
+  coalesce(r.commission_pct, 20) as commission_pct
+from <the existing from / joins>
+left join public.creator_rates r on upper(r.code) = upper(<alias>.code);
+```
+
+The wrapper view avoids all three traps, which is why it is the default.
 
 **`commission_pct` is a percentage, not a fraction**: `20` means 20%, and
 `17.5` works too. Putting `0.2` in there would pay out 0.2%.
