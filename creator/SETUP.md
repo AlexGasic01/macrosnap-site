@@ -1,6 +1,47 @@
 # Creator dashboard — setup
 
-One step: fill in two values at the top of `creator.js`.
+## 1. Run this in the Supabase SQL editor
+
+Safe to re-run; edit the rates to whatever you've agreed.
+
+```sql
+-- Let the page read the stats view.
+grant select on public.referral_counts to anon;
+
+-- Per-creator commission rates. commission_pct is a PERCENTAGE: 20 means 20%.
+create table if not exists public.creator_rates (
+  code           text primary key,
+  commission_pct numeric not null default 20,
+  note           text
+);
+
+grant select on public.creator_rates to anon;
+
+-- Read-only to everyone else; only you can change rates, from the table editor.
+alter table public.creator_rates enable row level security;
+
+drop policy if exists "creator rates are readable" on public.creator_rates;
+create policy "creator rates are readable"
+  on public.creator_rates for select to anon using (true);
+
+-- Your creators.
+insert into public.creator_rates (code, commission_pct) values
+  ('ALEX2509', 20),
+  ('BANGA',    25)
+on conflict (code) do update set commission_pct = excluded.commission_pct;
+```
+
+The RLS lines only apply to the new `creator_rates` table — they exist so
+Supabase doesn't flag it as unprotected, and they cannot affect the code
+tracking. Nothing here touches `referral_counts` or the tables beneath it.
+
+Check it worked:
+
+```sql
+select * from public.creator_rates;
+```
+
+## 2. Fill in two values at the top of `creator.js`.
 
 ```js
 var SUPABASE_URL           = "https://<project>.supabase.co";
@@ -19,23 +60,8 @@ Commission is worked out in the page — `revenue_usd * commission_pct / 100`.
 ## Per-creator rates
 
 `referral_counts` is a view, so there is no column to add a rate to. The rate
-lives in its own small table instead, which the page fetches alongside the
-stats:
-
-```sql
-create table if not exists public.creator_rates (
-  code           text primary key,
-  commission_pct numeric not null default 20,
-  note           text
-);
-
-grant select on public.creator_rates to anon;
-
-insert into public.creator_rates (code, commission_pct) values
-  ('ALEX2509', 20),
-  ('BANGA',    25)
-on conflict (code) do update set commission_pct = excluded.commission_pct;
-```
+lives in its own small table instead (created in step 1), which the page
+fetches alongside the stats.
 
 **`commission_pct` is a percentage, not a fraction**: `20` means 20%, and
 `17.5` works too. Putting `0.2` in there would pay out 0.2%.
