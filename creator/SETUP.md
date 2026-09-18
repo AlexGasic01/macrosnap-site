@@ -42,7 +42,7 @@ GET /rest/v1/referral_counts?select=name,code,code_inputs,purchases,conversion_p
 ## Links to send creators
 
 ```
-https://macrosnap.app/creator/#ALEX2509
+https://macrosnap.shop/creator/#ALEX2509
 ```
 
 The code sits in the URL fragment, which browsers never put in `Referer`
