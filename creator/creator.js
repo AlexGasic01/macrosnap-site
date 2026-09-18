@@ -2,8 +2,8 @@
    MacroSnap — creator dashboard
 
    Reads a creator's row straight out of the referral_counts view and paints
-   it. Configuration is the values below — no SQL to run, as long as the anon
-   role can select from the view.
+   it. Configuration is the three values below — no SQL to run, as long as the
+   anon role can select from the view.
 
    Note that the anon key ships in this file and is public by design, so the
    view is readable by anyone who opens the page: the code in the URL picks
@@ -17,15 +17,8 @@
 
   var SUPABASE_URL  = "";                 // https://<project>.supabase.co
   var SUPABASE_ANON = "";                 // anon / publishable key
-  // referral_dashboard is referral_counts with the creator's rate joined on
-  // (see SETUP.md). To go back to reading referral_counts directly, set this
-  // to "referral_counts" and drop commission_pct from COLUMNS below — every
-  // creator then falls back to DEFAULT_COMMISSION_PCT.
-  var SOURCE_VIEW = "referral_dashboard";
-
-  // A percentage, not a fraction: 20 means 20%. Used when the row carries no
-  // rate of its own.
-  var DEFAULT_COMMISSION_PCT = 20;
+  // A percentage, not a fraction: 20 means 20%. One rate for every creator.
+  var COMMISSION_PCT = 20;
   var APPSTORE_URL  =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
@@ -91,11 +84,10 @@
   // Named columns rather than *, so a column added to the view later doesn't
   // start arriving here unnoticed. ilike with no wildcards is an exact match
   // that ignores case, so a creator typing "alex2509" still lands on the row.
-  var COLUMNS =
-    "name,code,code_inputs,purchases,conversion_pct,revenue_usd,commission_pct";
+  var COLUMNS = "name,code,code_inputs,purchases,conversion_pct,revenue_usd";
 
   function loadStats(code) {
-    var url = SUPABASE_URL + "/rest/v1/" + SOURCE_VIEW
+    var url = SUPABASE_URL + "/rest/v1/referral_counts"
             + "?select=" + encodeURIComponent(COLUMNS)
             + "&code=ilike." + encodeURIComponent(code)
             + "&limit=1";
@@ -112,19 +104,6 @@
     }).then(function (rows) {
       return (rows && rows[0]) || null;      // null = no such code
     });
-  }
-
-  // A row with no usable rate falls back to the default rather than failing:
-  // a creator seeing their numbers at the default rate beats an error page.
-  function rateOf(row) {
-    var raw = row.commission_pct;
-    // Absent must be caught before Number(): Number(null) and Number("") are
-    // both 0, which would read as a deliberate 0% and pay the creator nothing.
-    if (raw === null || raw === undefined || raw === "") {
-      return DEFAULT_COMMISSION_PCT;
-    }
-    var n = Number(raw);
-    return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
   }
 
   /* ── Paint ────────────────────────────────────────────── */
@@ -151,7 +130,6 @@
   }
 
   function paint(row) {
-    var commissionPct = rateOf(row);
     currentCode = row.code;
 
     document.getElementById("crName").textContent = row.name || "there";
@@ -164,10 +142,10 @@
     // Commission is worked out here, not in the database.
     var earned = row.revenue_usd === null || row.revenue_usd === undefined
                ? null
-               : Number(row.revenue_usd) * (commissionPct / 100);
+               : Number(row.revenue_usd) * (COMMISSION_PCT / 100);
     document.getElementById("crEarned").textContent = money(earned);
     document.getElementById("crRateNote").textContent =
-      "Your rate is " + rate(commissionPct) + " · paid monthly";
+      "Your rate is " + rate(COMMISSION_PCT) + " · paid monthly";
 
     show("dash");
   }
