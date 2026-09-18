@@ -38,8 +38,10 @@
   };
 
   var DEFAULT_COMMISSION_PCT = 20;
-  var APPSTORE_URL  =
-    "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
+  // Where the share message sends people. The site rather than the App Store
+  // link, which is 70-odd characters and reads badly in a caption — the
+  // landing page carries the App Store badge anyway.
+  var SHARE_URL = "https://macrosnap.shop";
 
   var STORE_KEY = "ms-creator-code";
 
@@ -219,8 +221,7 @@
 
   if (shareBtn) {
     shareBtn.addEventListener("click", function () {
-      var message = "Get MacroSnap and use my code " + currentCode +
-                    " when you sign up — " + APPSTORE_URL;
+      var message = "Use code " + currentCode + " at " + SHARE_URL;
       var done = function () { shareNote.textContent = "Copied."; };
       var nope = function () { shareNote.textContent = "Couldn't copy — select it by hand: " + message; };
 
