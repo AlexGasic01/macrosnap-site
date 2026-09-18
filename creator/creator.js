@@ -24,18 +24,11 @@
     "ZSI6ImFub24iLCJpYXQiOjE3NzI2NTU3MTAsImV4cCI6MjA4ODIzMTcxMH0" +
     ".3E6gpywv1rgSemp2LaKKMz3RmZvfTbitAF4HApwwT5A";
   /* ── Commission rates ──────────────────────────────────────
-     One entry per creator, keyed by their code. Percentages, not fractions:
-     20 means 20%, and 17.5 works. Codes are matched case-insensitively, so
-     the keys here must be UPPERCASE.
+     Rates live in the creator_rates table in Supabase (see SETUP.md), one row
+     per code, as a percentage: 20 means 20%. Editing a rate is one cell in the
+     table editor — no deploy.
 
-     To change someone's rate, edit their number and redeploy. A creator with
-     no entry — a code added to Supabase but not here yet — falls back to
-     DEFAULT_COMMISSION_PCT rather than showing an error. */
-
-  var COMMISSION_PCT = {
-    ALEX2509: 20,
-    BANGA:    25
-  };
+     This is only the fallback, used for a creator with no row there. */
 
   var DEFAULT_COMMISSION_PCT = 20;
   // Where the share message sends people.
@@ -126,6 +119,39 @@
     });
   }
 
+  // Resolves to a number, always — a missing table, a missing row, a null or
+  // an unparseable value all fall back to the default rather than rejecting.
+  // A creator seeing their numbers at the default rate beats an error page.
+  function loadRate(code) {
+    var url = SUPABASE_URL + "/rest/v1/creator_rates"
+            + "?select=commission_pct"
+            + "&code=ilike." + encodeURIComponent(code)
+            + "&limit=1";
+
+    return fetch(url, {
+      headers: {
+        "apikey": SUPABASE_ANON,
+        "Authorization": "Bearer " + SUPABASE_ANON,
+        "Accept": "application/json"
+      }
+    }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (rows) {
+      var raw = rows && rows[0] ? rows[0].commission_pct : null;
+
+      // Absent must be caught before Number(): Number(null) and Number("")
+      // are both 0, which would read as a deliberate 0% and pay nothing.
+      if (raw === null || raw === undefined || raw === "") {
+        return DEFAULT_COMMISSION_PCT;
+      }
+      var n = Number(raw);
+      return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
+    })["catch"](function () {
+      return DEFAULT_COMMISSION_PCT;
+    });
+  }
+
   /* ── Paint ────────────────────────────────────────────── */
 
   function num(v) {
@@ -149,22 +175,7 @@
     return String(Math.round(pctValue * 10) / 10) + "%";
   }
 
-  function rateFor(code) {
-    var key = String(code || "").toUpperCase();
-
-    // hasOwnProperty rather than a truthiness check, for two reasons: a
-    // deliberate 0 is falsy and must not read as "not listed", and a code
-    // like CONSTRUCTOR or TOSTRING would otherwise pick up an inherited
-    // property off Object.prototype.
-    if (!Object.prototype.hasOwnProperty.call(COMMISSION_PCT, key)) {
-      return DEFAULT_COMMISSION_PCT;
-    }
-
-    var n = Number(COMMISSION_PCT[key]);
-    return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
-  }
-
-  function paint(row) {
+  function paint(row, commissionPct) {
     currentCode = row.code;
 
     document.getElementById("crName").textContent = row.name || "there";
@@ -178,7 +189,6 @@
     document.getElementById("crConversion").textContent = pct(row.conversion_pct);
 
     // Commission is worked out here, not in the database.
-    var commissionPct = rateFor(row.code);
     var earned = row.revenue_usd === null || row.revenue_usd === undefined
                ? null
                : Number(row.revenue_usd) * (commissionPct / 100);
@@ -191,7 +201,10 @@
 
   function go(code) {
     show("loading");
-    loadStats(code).then(function (row) {
+    // Fetched together. loadRate always resolves, so the pair only rejects
+    // when the stats themselves fail.
+    Promise.all([loadStats(code), loadRate(code)]).then(function (both) {
+      var row = both[0], commissionPct = both[1];
       if (!row) {
         forget();
         fail("Code not recognised",
@@ -199,7 +212,7 @@
         return;
       }
       remember(row.code);
-      paint(row);
+      paint(row, commissionPct);
     })["catch"](function () {
       fail("Couldn't reach the server",
            "Something went wrong loading your numbers. Try again in a minute.");

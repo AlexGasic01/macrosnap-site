@@ -19,29 +19,49 @@ if you ever need to change project).
 
 ## Commission rates
 
-One entry per creator, near the top of `creator.js`:
+Rates live in their own table, one row per code, so changing one is a cell in
+the Supabase table editor rather than a deploy. Run this once:
 
-```js
-var COMMISSION_PCT = {
-  ALEX2509: 20,
-  BANGA:    25
-};
+```sql
+create table if not exists public.creator_rates (
+  code           text primary key,
+  commission_pct numeric not null default 20,
+  note           text
+);
 
-var DEFAULT_COMMISSION_PCT = 20;
+grant select on public.creator_rates to anon;
+
+-- Read-only to everyone else; only you change rates, from the table editor.
+alter table public.creator_rates enable row level security;
+
+drop policy if exists "creator rates are readable" on public.creator_rates;
+create policy "creator rates are readable"
+  on public.creator_rates for select to anon using (true);
+
+-- Your creators. Edit the numbers to whatever you have agreed.
+insert into public.creator_rates (code, commission_pct) values
+  ('ALEX2509', 20),
+  ('BANGA',    25)
+on conflict (code) do update set commission_pct = excluded.commission_pct;
 ```
 
-Percentages, not fractions: `20` means 20%, `17.5` works. **Keys must be
-UPPERCASE** — codes are matched case-insensitively by upper-casing them first,
-so a lowercase key would never be found and that creator would silently drop
-to the default.
+After that: **Table editor → creator_rates**, change the number, done. The
+next dashboard load picks it up.
 
-Adding a creator to Supabase without adding them here is safe: they get
-`DEFAULT_COMMISSION_PCT` rather than an error. Changing a rate means editing
-the number and redeploying.
+**`commission_pct` is a percentage, not a fraction**: `20` means 20%, `17.5`
+works. Putting `0.2` in there would pay out 0.2%.
 
-If you would rather change rates without a deploy, the alternative is a
-`creator_rates` table in Supabase that the page reads alongside the stats —
-more moving parts, but editable from the table editor.
+Adding a creator with no row here is safe — they fall back to
+`DEFAULT_COMMISSION_PCT` in `creator.js` rather than seeing an error. So does
+a null rate, or the table not existing at all. An explicit `0` is honoured as
+0%.
+
+The `note` column is for your own reference (why this creator is on a
+different rate); the page never reads it.
+
+The RLS lines apply only to this new table — they exist so Supabase doesn't
+flag it as unprotected, and they cannot affect `referral_counts` or the code
+tracking.
 
 ## How it works
 
