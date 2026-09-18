@@ -38,10 +38,9 @@
   };
 
   var DEFAULT_COMMISSION_PCT = 20;
-  // Where the share message sends people. The site rather than the App Store
-  // link, which is 70-odd characters and reads badly in a caption — the
-  // landing page carries the App Store badge anyway.
-  var SHARE_URL = "https://macrosnap.shop";
+  // Where the share message sends people.
+  var SHARE_URL =
+    "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
   var STORE_KEY = "ms-creator-code";
 
