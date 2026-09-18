@@ -23,8 +23,21 @@
     ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdsdWd5dG9qcnh6cmx2Y2F4c25iIiwicm9s" +
     "ZSI6ImFub24iLCJpYXQiOjE3NzI2NTU3MTAsImV4cCI6MjA4ODIzMTcxMH0" +
     ".3E6gpywv1rgSemp2LaKKMz3RmZvfTbitAF4HApwwT5A";
-  // A percentage, not a fraction: 20 means 20%. One rate for every creator.
-  var COMMISSION_PCT = 20;
+  /* ── Commission rates ──────────────────────────────────────
+     One entry per creator, keyed by their code. Percentages, not fractions:
+     20 means 20%, and 17.5 works. Codes are matched case-insensitively, so
+     the keys here must be UPPERCASE.
+
+     To change someone's rate, edit their number and redeploy. A creator with
+     no entry — a code added to Supabase but not here yet — falls back to
+     DEFAULT_COMMISSION_PCT rather than showing an error. */
+
+  var COMMISSION_PCT = {
+    ALEX2509: 20,
+    BANGA:    25
+  };
+
+  var DEFAULT_COMMISSION_PCT = 20;
   var APPSTORE_URL  =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
@@ -135,6 +148,21 @@
     return String(Math.round(pctValue * 10) / 10) + "%";
   }
 
+  function rateFor(code) {
+    var key = String(code || "").toUpperCase();
+
+    // hasOwnProperty rather than a truthiness check, for two reasons: a
+    // deliberate 0 is falsy and must not read as "not listed", and a code
+    // like CONSTRUCTOR or TOSTRING would otherwise pick up an inherited
+    // property off Object.prototype.
+    if (!Object.prototype.hasOwnProperty.call(COMMISSION_PCT, key)) {
+      return DEFAULT_COMMISSION_PCT;
+    }
+
+    var n = Number(COMMISSION_PCT[key]);
+    return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
+  }
+
   function paint(row) {
     currentCode = row.code;
 
@@ -146,12 +174,13 @@
     document.getElementById("crConversion").textContent = pct(row.conversion_pct);
 
     // Commission is worked out here, not in the database.
+    var commissionPct = rateFor(row.code);
     var earned = row.revenue_usd === null || row.revenue_usd === undefined
                ? null
-               : Number(row.revenue_usd) * (COMMISSION_PCT / 100);
+               : Number(row.revenue_usd) * (commissionPct / 100);
     document.getElementById("crEarned").textContent = money(earned);
     document.getElementById("crRateNote").textContent =
-      "Your rate is " + rate(COMMISSION_PCT) + " · paid monthly";
+      "Your rate is " + rate(commissionPct) + " · paid monthly";
 
     show("dash");
   }

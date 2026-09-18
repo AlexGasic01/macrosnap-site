@@ -14,13 +14,34 @@ tracking.
 
 ## 2. In `creator.js`
 
+The Supabase values are already filled in (both are under **Settings → API**
+if you ever need to change project).
+
+## Commission rates
+
+One entry per creator, near the top of `creator.js`:
+
 ```js
-var SUPABASE_URL   = "https://<project>.supabase.co";
-var SUPABASE_ANON  = "<anon key>";
-var COMMISSION_PCT = 20;                 // a percentage: 20 means 20%
+var COMMISSION_PCT = {
+  ALEX2509: 20,
+  BANGA:    25
+};
+
+var DEFAULT_COMMISSION_PCT = 20;
 ```
 
-Both Supabase values are under **Settings → API**.
+Percentages, not fractions: `20` means 20%, `17.5` works. **Keys must be
+UPPERCASE** — codes are matched case-insensitively by upper-casing them first,
+so a lowercase key would never be found and that creator would silently drop
+to the default.
+
+Adding a creator to Supabase without adding them here is safe: they get
+`DEFAULT_COMMISSION_PCT` rather than an error. Changing a rate means editing
+the number and redeploying.
+
+If you would rather change rates without a deploy, the alternative is a
+`creator_rates` table in Supabase that the page reads alongside the stats —
+more moving parts, but editable from the table editor.
 
 ## How it works
 
