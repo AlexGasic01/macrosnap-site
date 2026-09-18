@@ -31,6 +31,10 @@
      This is only the fallback, used for a creator with no row there. */
 
   var DEFAULT_COMMISSION_PCT = 20;
+  // Where a payout request lands. The same address as /support — whoever
+  // brought the creator into the program answers it.
+  var PAYOUT_EMAIL = "alex.digital200@gmail.com";
+
   // Where the share message sends people.
   var SHARE_URL =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
@@ -50,6 +54,7 @@
   var codeInput = document.getElementById("crCodeInput");
   var gateNote  = document.getElementById("crGateNote");
   var shareBtn  = document.getElementById("crShare");
+  var payoutBtn = document.getElementById("crPayout");
   var shareNote = document.getElementById("crShareNote");
   var signOut   = document.getElementById("crSignOut");
   var retry     = document.getElementById("crRetry");
@@ -175,6 +180,34 @@
     return String(Math.round(pctValue * 10) / 10) + "%";
   }
 
+  // Pre-fills the request with the code and the figures the creator is
+  // looking at, so the reply doesn't start with three rounds of "which code,
+  // and how much?". The method line is left for them to pick.
+  function setPayoutLink(row, earnedText) {
+    if (!payoutBtn) return;
+
+    var subject = "Payout request — " + row.code;
+    var body = [
+      "Hi,",
+      "",
+      "I'd like to request a payout for code " + row.code + ".",
+      "",
+      "My dashboard currently shows:",
+      "  Purchases: " + num(row.purchases),
+      "  Earned: " + earnedText,
+      "",
+      "Preferred method (delete one): PayPal / bank transfer",
+      "PayPal email or bank details:",
+      "",
+      "Thanks,",
+      row.name || ""
+    ].join("\r\n");
+
+    payoutBtn.href = "mailto:" + PAYOUT_EMAIL
+                   + "?subject=" + encodeURIComponent(subject)
+                   + "&body=" + encodeURIComponent(body);
+  }
+
   function paint(row, commissionPct) {
     currentCode = row.code;
 
@@ -195,6 +228,8 @@
     document.getElementById("crEarned").textContent = money(earned);
     document.getElementById("crRateNote").textContent =
       "Your rate is " + rate(commissionPct) + " · paid monthly";
+
+    setPayoutLink(row, money(earned));
 
     show("dash");
   }

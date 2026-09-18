@@ -644,6 +644,24 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 }
 .stat-note { line-height: 1.5; }
 
+/* ── Payout ── */
+.payout-card {
+  background: var(--card);
+  border-radius: 16px; padding: 26px;
+  margin-top: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 24px;
+}
+.payout-main { display: flex; flex-direction: column; gap: 6px; }
+.payout-main .icon { color: var(--accent); margin-bottom: 10px; }
+.payout-main p { font-size: 14px; line-height: 1.7; }
+.payout-methods b { color: var(--text); font-weight: 600; }
+.payout-actions {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 9px;
+  max-width: 260px; flex-shrink: 0;
+}
+.payout-actions .tiny { line-height: 1.5; }
+
 .creator-foot-note { display: block; margin-top: 22px; }
 .creator-foot-note a { color: var(--accent); }
 .creator-foot-note a:hover { text-decoration: underline; }
@@ -687,4 +705,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   .creator-head { flex-direction: column; align-items: flex-start; gap: 16px; }
   .stat { padding: 18px 20px; }
   .stat-value { font-size: 30px; }
+  .payout-card { padding: 22px 20px; gap: 18px; }
+  .payout-actions { max-width: none; width: 100%; }
+  .payout-actions .btn { width: 100%; }
 }
