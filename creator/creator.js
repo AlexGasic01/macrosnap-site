@@ -169,8 +169,11 @@
     document.getElementById("crName").textContent = row.name || "there";
     document.getElementById("crCode").textContent = row.code;
     document.getElementById("crUses").textContent = num(row.code_inputs);
-    document.getElementById("crUsesInline").textContent = num(row.code_inputs);
     document.getElementById("crPurchases").textContent = num(row.purchases);
+
+    document.getElementById("crPurchasesInline").textContent = num(row.purchases);
+    document.getElementById("crPurchasesWord").textContent =
+      Number(row.purchases) === 1 ? "purchase" : "purchases";
     document.getElementById("crConversion").textContent = pct(row.conversion_pct);
 
     // Commission is worked out here, not in the database.
