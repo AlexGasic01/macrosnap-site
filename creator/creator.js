@@ -15,8 +15,14 @@
 
   /* ── Configuration ────────────────────────────────────── */
 
-  var SUPABASE_URL  = "";                 // https://<project>.supabase.co
-  var SUPABASE_ANON = "";                 // anon / publishable key
+  var SUPABASE_URL  = "https://glugytojrxzrlvcaxsnb.supabase.co";
+  // The anon key is public by design and belongs in this file — it grants
+  // exactly what the anon role is granted, nothing more.
+  var SUPABASE_ANON =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
+    ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdsdWd5dG9qcnh6cmx2Y2F4c25iIiwicm9s" +
+    "ZSI6ImFub24iLCJpYXQiOjE3NzI2NTU3MTAsImV4cCI6MjA4ODIzMTcxMH0" +
+    ".3E6gpywv1rgSemp2LaKKMz3RmZvfTbitAF4HApwwT5A";
   // A percentage, not a fraction: 20 means 20%. One rate for every creator.
   var COMMISSION_PCT = 20;
   var APPSTORE_URL  =
