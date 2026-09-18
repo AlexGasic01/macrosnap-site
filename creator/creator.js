@@ -208,26 +208,32 @@
                    + "&body=" + encodeURIComponent(body);
   }
 
+  // Tolerates a missing element, so a tile can be hidden or deleted from the
+  // markup without the rest of the paint failing on it.
+  function setText(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
   function paint(row, commissionPct) {
     currentCode = row.code;
 
-    document.getElementById("crName").textContent = row.name || "there";
-    document.getElementById("crCode").textContent = row.code;
-    document.getElementById("crUses").textContent = num(row.code_inputs);
-    document.getElementById("crPurchases").textContent = num(row.purchases);
+    setText("crName", row.name || "there");
+    setText("crCode", row.code);
+    setText("crUses", num(row.code_inputs));
+    setText("crPurchases", num(row.purchases));
 
-    document.getElementById("crPurchasesInline").textContent = num(row.purchases);
-    document.getElementById("crPurchasesWord").textContent =
-      Number(row.purchases) === 1 ? "purchase" : "purchases";
-    document.getElementById("crConversion").textContent = pct(row.conversion_pct);
+    setText("crPurchasesInline", num(row.purchases));
+    setText("crPurchasesWord",
+            Number(row.purchases) === 1 ? "purchase" : "purchases");
+    setText("crConversion", pct(row.conversion_pct));
+    setText("crRate", rate(commissionPct));
 
     // Commission is worked out here, not in the database.
     var earned = row.revenue_usd === null || row.revenue_usd === undefined
                ? null
                : Number(row.revenue_usd) * (commissionPct / 100);
-    document.getElementById("crEarned").textContent = money(earned);
-    document.getElementById("crRateNote").textContent =
-      "Your rate is " + rate(commissionPct) + " · paid monthly";
+    setText("crEarned", money(earned));
 
     setPayoutLink(row, money(earned));
 

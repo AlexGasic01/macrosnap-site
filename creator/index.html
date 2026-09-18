@@ -88,7 +88,9 @@
 
         <!-- STATS -->
         <div class="stat-grid fu" style="--d:.06s">
-          <div class="stat">
+          <!-- Temporarily hidden. Delete the `hidden` attribute to bring the
+               code-entry count back; the script fills it in either way. -->
+          <div class="stat" hidden>
             <span class="stat-label">Code entered</span>
             <span class="stat-value" id="crUses">0</span>
             <span class="stat-note tiny sub">People who typed it in the app</span>
@@ -104,9 +106,14 @@
             <span class="stat-note tiny sub">Of everyone who entered it</span>
           </div>
           <div class="stat">
+            <span class="stat-label">Commission rate</span>
+            <span class="stat-value" id="crRate">—</span>
+            <span class="stat-note tiny sub">Your cut of each subscription</span>
+          </div>
+          <div class="stat">
             <span class="stat-label">Earned</span>
             <span class="stat-value" id="crEarned">—</span>
-            <span class="stat-note tiny sub" id="crRateNote">Paid out monthly</span>
+            <span class="stat-note tiny sub">Paid out monthly</span>
           </div>
         </div>
 
