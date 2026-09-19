@@ -1,6 +1,8 @@
 -- ═══════════════════════════════════════════════════════════
 -- creator_tokens — one secret link per influencer
 --
+-- Full context: CREATOR-DASHBOARD.md at the repo root.
+--
 -- This file belongs in the MacroSnap repo's supabase/migrations/, not here;
 -- it lives in the site repo only because that is where the dashboard that
 -- consumes it is. Copy it across as a migration rather than running it ad hoc.
