@@ -1,13 +1,13 @@
 /* ═══════════════════════════════════════════════════════════
    MacroSnap — creator dashboard
 
-   Reads a creator's row straight out of the referral_counts view and paints
-   it. Configuration is the three values below — no SQL to run, as long as the
-   anon role can select from the view.
+   Talks to /api/creator-stats, never to Supabase. public.referral is
+   readable only by the service role, which lives on the server and must
+   never reach a browser.
 
-   Note that the anon key ships in this file and is public by design, so the
-   view is readable by anyone who opens the page: the code in the URL picks
-   which row to show, it does not limit which rows are reachable.
+   The dashboard link carries a TOKEN, not a code: codes are public (creators
+   post them), so a code in the URL would let anyone open anyone's numbers.
+   The token is exchanged for a row server-side.
    ═══════════════════════════════════════════════════════════ */
 
 (function () {
@@ -15,49 +15,26 @@
 
   /* ── Configuration ────────────────────────────────────── */
 
-  var SUPABASE_URL  = "https://glugytojrxzrlvcaxsnb.supabase.co";
-  // The anon key is public by design and belongs in this file — it grants
-  // exactly what the anon role is granted, nothing more.
-  var SUPABASE_ANON =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9" +
-    ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdsdWd5dG9qcnh6cmx2Y2F4c25iIiwicm9s" +
-    "ZSI6ImFub24iLCJpYXQiOjE3NzI2NTU3MTAsImV4cCI6MjA4ODIzMTcxMH0" +
-    ".3E6gpywv1rgSemp2LaKKMz3RmZvfTbitAF4HApwwT5A";
-  /* ── Commission rates ──────────────────────────────────────
-     Rates live in the creator_rates table in Supabase (see SETUP.md), one row
-     per code, as a percentage: 20 means 20%. Editing a rate is one cell in the
-     table editor — no deploy.
+  var ENDPOINT = "/api/creator-stats";
 
-     This is only the fallback, used for a creator with no row there. */
-
-  var DEFAULT_COMMISSION_PCT = 20;
-  // Where a payout request lands. The same address as /support — whoever
-  // brought the creator into the program answers it.
   var PAYOUT_EMAIL = "alex.digital200@gmail.com";
-
-  // Where the share message sends people.
   var SHARE_URL =
     "https://apps.apple.com/us/app/macrosnap-ai-calorie-tracker/id6759880124";
 
-  var STORE_KEY = "ms-creator-code";
+  var STORE_KEY = "ms-creator-token";
 
   /* ── Elements ─────────────────────────────────────────── */
 
   var views = {
     loading: document.getElementById("crLoading"),
-    gate:    document.getElementById("crGate"),
     dash:    document.getElementById("crDash"),
     error:   document.getElementById("crError")
   };
 
-  var gateForm  = document.getElementById("crGateForm");
-  var codeInput = document.getElementById("crCodeInput");
-  var gateNote  = document.getElementById("crGateNote");
   var shareBtn  = document.getElementById("crShare");
-  var payoutBtn = document.getElementById("crPayout");
   var shareNote = document.getElementById("crShareNote");
+  var payoutBtn = document.getElementById("crPayout");
   var signOut   = document.getElementById("crSignOut");
-  var retry     = document.getElementById("crRetry");
 
   var currentCode = "";
 
@@ -67,31 +44,35 @@
     });
   }
 
+  function setText(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
   function fail(title, body) {
-    document.getElementById("crErrorTitle").textContent = title;
-    document.getElementById("crErrorBody").textContent = body;
+    setText("crErrorTitle", title);
+    setText("crErrorBody", body);
     show("error");
   }
 
-  /* ── Where the code comes from ────────────────────────────
-     The fragment, not a query string: fragments are never sent in Referer
-     headers and never reach a server log, so the link survives being tapped
-     through to the App Store. Both /creator/#ALEX2509 and
-     /creator/#code=ALEX2509 work — the emailed links use the short form. */
+  /* ── The token ────────────────────────────────────────────
+     From the fragment, which browsers never put in a Referer header or a
+     server log — so the secret survives being tapped through to the App
+     Store. Both /creator/#t=<token> and /creator/#<token> work. */
 
-  function codeFromHash() {
+  function tokenFromHash() {
     var raw = window.location.hash.replace(/^#/, "");
     if (!raw) return "";
-    var viaParam = new URLSearchParams(raw).get("code");
-    var code = viaParam || raw;
-    return /^[A-Za-z0-9_-]{1,40}$/.test(code) ? code.toUpperCase() : "";
+    var viaParam = new URLSearchParams(raw).get("t");
+    var token = viaParam || raw;
+    return /^[a-f0-9]{32,128}$/i.test(token) ? token : "";
   }
 
   function remembered() {
     try { return localStorage.getItem(STORE_KEY) || ""; } catch (e) { return ""; }
   }
-  function remember(code) {
-    try { localStorage.setItem(STORE_KEY, code); } catch (e) {}   // private mode
+  function remember(token) {
+    try { localStorage.setItem(STORE_KEY, token); } catch (e) {}   // private mode
   }
   function forget() {
     try { localStorage.removeItem(STORE_KEY); } catch (e) {}
@@ -99,91 +80,60 @@
 
   /* ── Fetch ────────────────────────────────────────────── */
 
-  // Named columns rather than *, so a column added to the view later doesn't
-  // start arriving here unnoticed. ilike with no wildcards is an exact match
-  // that ignores case, so a creator typing "alex2509" still lands on the row.
-  var COLUMNS = "name,code,code_inputs,purchases,conversion_pct,revenue_usd";
-
-  function loadStats(code) {
-    var url = SUPABASE_URL + "/rest/v1/referral_counts"
-            + "?select=" + encodeURIComponent(COLUMNS)
-            + "&code=ilike." + encodeURIComponent(code)
-            + "&limit=1";
-
-    return fetch(url, {
-      headers: {
-        "apikey": SUPABASE_ANON,
-        "Authorization": "Bearer " + SUPABASE_ANON,
-        "Accept": "application/json"
-      }
+  function loadStats(token) {
+    return fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ token: token })
     }).then(function (r) {
+      if (r.status === 404) return null;                 // unknown or revoked
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.json();
-    }).then(function (rows) {
-      return (rows && rows[0]) || null;      // null = no such code
     });
   }
 
-  // Resolves to a number, always — a missing table, a missing row, a null or
-  // an unparseable value all fall back to the default rather than rejecting.
-  // A creator seeing their numbers at the default rate beats an error page.
-  function loadRate(code) {
-    var url = SUPABASE_URL + "/rest/v1/creator_rates"
-            + "?select=commission_pct"
-            + "&code=ilike." + encodeURIComponent(code)
-            + "&limit=1";
-
-    return fetch(url, {
-      headers: {
-        "apikey": SUPABASE_ANON,
-        "Authorization": "Bearer " + SUPABASE_ANON,
-        "Accept": "application/json"
-      }
-    }).then(function (r) {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.json();
-    }).then(function (rows) {
-      var raw = rows && rows[0] ? rows[0].commission_pct : null;
-
-      // Absent must be caught before Number(): Number(null) and Number("")
-      // are both 0, which would read as a deliberate 0% and pay nothing.
-      if (raw === null || raw === undefined || raw === "") {
-        return DEFAULT_COMMISSION_PCT;
-      }
-      var n = Number(raw);
-      return isFinite(n) && n >= 0 ? n : DEFAULT_COMMISSION_PCT;
-    })["catch"](function () {
-      return DEFAULT_COMMISSION_PCT;
-    });
-  }
-
-  /* ── Paint ────────────────────────────────────────────── */
+  /* ── Formatting ───────────────────────────────────────── */
 
   function num(v) {
-    return typeof v === "number" ? v.toLocaleString() : "0";
+    return v === null || v === undefined ? "0" : Number(v).toLocaleString();
   }
 
-  // conversion_pct is null whenever nobody has entered the code yet — 0/0 is
-  // not 0%, it is "nothing to divide". Show a dash rather than a made-up zero.
   function pct(v) {
     return v === null || v === undefined ? "—" : Number(v).toFixed(1) + "%";
   }
 
   function money(v) {
     if (v === null || v === undefined) return "—";
-    return "$" + Number(v).toFixed(2);
+    return "$" + Number(v).toLocaleString(undefined, {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    });
   }
 
-  // Trailing .0 reads like false precision on a rate someone set by hand:
-  // 20 shows as "20%", 17.5 keeps its half.
-  function rate(pctValue) {
-    return String(Math.round(pctValue * 10) / 10) + "%";
+  // Trailing .0 reads like false precision on a rate set by hand: 20 shows
+  // as "20%", 17.5 keeps its half.
+  function rate(v) {
+    if (v === null || v === undefined) return "—";
+    return String(Math.round(Number(v) * 10) / 10) + "%";
   }
+
+  // "today" / "yesterday" / "3 days ago" / a date once it stops being recent.
+  function when(iso) {
+    if (!iso) return "never";
+    var then = new Date(iso);
+    if (isNaN(then.getTime())) return "never";
+
+    var days = Math.floor((Date.now() - then.getTime()) / 86400000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 30) return days + " days ago";
+    return then.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  /* ── Paint ────────────────────────────────────────────── */
 
   // Pre-fills the request with the code and the figures the creator is
-  // looking at, so the reply doesn't start with three rounds of "which code,
-  // and how much?". The method line is left for them to pick.
-  function setPayoutLink(row, earnedText) {
+  // looking at, so the reply doesn't start with "which code, and how much?".
+  function setPayoutLink(row) {
     if (!payoutBtn) return;
 
     var subject = "Payout request — " + row.code;
@@ -194,7 +144,7 @@
       "",
       "My dashboard currently shows:",
       "  Purchases: " + num(row.purchases),
-      "  Earned: " + earnedText,
+      "  Earnings: " + money(row.commission_usd),
       "",
       "Preferred method (delete one): PayPal / bank transfer",
       "PayPal email or bank details:",
@@ -208,75 +158,62 @@
                    + "&body=" + encodeURIComponent(body);
   }
 
-  // Tolerates a missing element, so a tile can be hidden or deleted from the
-  // markup without the rest of the paint failing on it.
-  function setText(id, value) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = value;
-  }
-
-  function paint(row, commissionPct) {
+  function paint(row) {
     currentCode = row.code;
 
     setText("crName", row.name || "there");
     setText("crCode", row.code);
-    setText("crUses", num(row.code_inputs));
-    setText("crPurchases", num(row.purchases));
 
     setText("crPurchasesInline", num(row.purchases));
     setText("crPurchasesWord",
             Number(row.purchases) === 1 ? "purchase" : "purchases");
+
+    setText("crUses", num(row.code_inputs));
+    setText("crPurchases", num(row.purchases));
     setText("crConversion", pct(row.conversion_pct));
-    setText("crRate", rate(commissionPct));
+    setText("crRevenue", money(row.net_revenue_usd));
+    setText("crRate", rate(row.commission_pct));
+    setText("crEarned", money(row.commission_usd));
 
-    // Commission is worked out here, not in the database.
-    var earned = row.revenue_usd === null || row.revenue_usd === undefined
-               ? null
-               : Number(row.revenue_usd) * (commissionPct / 100);
-    setText("crEarned", money(earned));
+    setText("crLastInput", when(row.last_input_at));
+    setText("crLastPurchase", when(row.last_purchase_at));
 
-    setPayoutLink(row, money(earned));
+    // A switched-off code still shows its history — the numbers it already
+    // earned are unaffected — but the creator needs to know it has stopped
+    // taking new signups, or they'll post it and wonder.
+    var paused = document.getElementById("crPaused");
+    if (paused) paused.hidden = row.active !== false;
 
+    setPayoutLink(row);
     show("dash");
   }
 
-  function go(code) {
+  function go(token) {
     show("loading");
-    // Fetched together. loadRate always resolves, so the pair only rejects
-    // when the stats themselves fail.
-    Promise.all([loadStats(code), loadRate(code)]).then(function (both) {
-      var row = both[0], commissionPct = both[1];
+    loadStats(token).then(function (row) {
       if (!row) {
         forget();
-        fail("Code not recognised",
-             "Check it against the email we sent you — codes are case-insensitive but have to match exactly.");
+        fail("This link isn't valid",
+             "It may have been replaced or switched off. Ask us for a fresh dashboard link and we'll send one over.");
         return;
       }
-      remember(row.code);
-      paint(row, commissionPct);
+      remember(token);
+      paint(row);
     })["catch"](function () {
-      fail("Couldn't reach the server",
-           "Something went wrong loading your numbers. Try again in a minute.");
+      fail("Couldn't load your numbers",
+           "Something went wrong at our end. Try again in a minute.");
     });
   }
 
   /* ── Wiring ───────────────────────────────────────────── */
 
-  if (gateForm) {
-    gateForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var code = (codeInput.value || "").trim().toUpperCase();
-      if (!code) return;
-      gateNote.textContent = "";
-      go(code);
-    });
-  }
-
   if (shareBtn) {
     shareBtn.addEventListener("click", function () {
       var message = "Use code " + currentCode + " at " + SHARE_URL;
       var done = function () { shareNote.textContent = "Copied."; };
-      var nope = function () { shareNote.textContent = "Couldn't copy — select it by hand: " + message; };
+      var nope = function () {
+        shareNote.textContent = "Couldn't copy — select it by hand: " + message;
+      };
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(message).then(done)["catch"](nope);
@@ -289,36 +226,19 @@
   if (signOut) {
     signOut.addEventListener("click", function () {
       forget();
-      if (window.location.hash) {
-        // Drop the code from the URL without leaving a history entry behind.
-        history.replaceState(null, "", window.location.pathname);
-      }
-      codeInput.value = "";
-      show("gate");
-    });
-  }
-
-  if (retry) {
-    retry.addEventListener("click", function () {
-      forget();
       history.replaceState(null, "", window.location.pathname);
-      codeInput.value = "";
-      show("gate");
+      fail("Signed out",
+           "Open your dashboard link again to get back in.");
     });
   }
 
   /* ── Start ────────────────────────────────────────────── */
 
-  if (!SUPABASE_URL || !SUPABASE_ANON) {
-    fail("Not configured yet",
-         "SUPABASE_URL and SUPABASE_ANON still need filling in at the top of creator.js.");
-    return;
-  }
-
-  var initial = codeFromHash() || remembered();
+  var initial = tokenFromHash() || remembered();
   if (initial) {
     go(initial);
   } else {
-    show("gate");
+    fail("You need your dashboard link",
+         "Open the link we emailed you when you joined the program. It's the whole address, including the part after the #.");
   }
 })();

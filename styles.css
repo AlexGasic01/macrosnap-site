@@ -629,7 +629,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
 
 /* ── Stats ── */
 .stat-grid {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(186px, 1fr));
   gap: 16px; margin-top: 16px;
 }
 .stat {
@@ -638,9 +638,11 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   display: flex; flex-direction: column; gap: 6px;
 }
 .stat-label { font-size: 12.5px; font-weight: 600; letter-spacing: -0.1px; color: var(--body); }
+/* Narrower tiles than the 4-up version, so the money values need to come
+   down a little or "$1,234.56" overhangs its card. */
 .stat-value {
-  font-size: 34px; font-weight: 600; letter-spacing: -1.4px;
-  line-height: 1.1; color: var(--text);
+  font-size: 29px; font-weight: 600; letter-spacing: -1.2px;
+  line-height: 1.15; color: var(--text);
 }
 .stat-note { line-height: 1.5; }
 
@@ -661,6 +663,26 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   max-width: 260px; flex-shrink: 0;
 }
 .payout-actions .tiny { line-height: 1.5; }
+
+/* ── Paused-code notice ── */
+.notice {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--card); border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 16px;
+  font-size: 13.5px; line-height: 1.65; color: var(--body);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+.notice b { color: var(--text); font-weight: 600; }
+.notice a { color: var(--accent); }
+.notice a:hover { text-decoration: underline; }
+.notice-icon {
+  width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px;
+  display: grid; place-items: center; color: var(--accent);
+}
+.notice-icon svg { width: 100%; height: 100%; display: block; }
+
+.creator-meta { display: block; margin-top: 14px; }
+.creator-meta b { color: var(--body); font-weight: 600; }
 
 .creator-foot-note { display: block; margin-top: 22px; }
 .creator-foot-note a { color: var(--accent); }
@@ -704,7 +726,7 @@ img.shot { width: 100%; height: 100%; object-fit: cover; object-position: top ce
   .code-card-actions .btn { width: 100%; }
   .creator-head { flex-direction: column; align-items: flex-start; gap: 16px; }
   .stat { padding: 18px 20px; }
-  .stat-value { font-size: 30px; }
+  .stat-value { font-size: 26px; }
   .payout-card { padding: 22px 20px; gap: 18px; }
   .payout-actions { max-width: none; width: 100%; }
   .payout-actions .btn { width: 100%; }

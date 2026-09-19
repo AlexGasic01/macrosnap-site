@@ -5,8 +5,8 @@
      stop looking for it. -->
 <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <!-- The code sits in the URL fragment. noindex keeps the page out of search
-       results; no-referrer stops the fragment travelling to the App Store. -->
+  <!-- The dashboard token sits in the URL fragment. noindex keeps the page
+       out of search results; no-referrer stops the fragment travelling on. -->
   <meta name="robots" content="noindex, nofollow" />
   <meta name="referrer" content="no-referrer" />
   <title>Creator dashboard — MacroSnap</title>
@@ -38,24 +38,6 @@
     <span class="tiny sub">Loading your numbers…</span>
   </div>
 
-  <!-- ══════════ GATE — no code in the URL ══════════ -->
-  <div class="section creator-centre" id="crGate" hidden>
-    <div class="card creator-gate fu" style="--d:0s">
-      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5.5v2M13 11v2M13 16.5v2"/></svg></div>
-      <h3>Enter your creator code</h3>
-      <p>The one we sent you when you joined the program.</p>
-      <form class="form creator-gate-form" id="crGateForm">
-        <label>
-          <span class="visually-hidden">Creator code</span>
-          <input id="crCodeInput" type="text" name="code" placeholder="ALEX2509" autocomplete="off"
-                 autocapitalize="characters" spellcheck="false" required />
-        </label>
-        <button class="btn btn-cta btn-block" type="submit">View my dashboard</button>
-      </form>
-      <p class="tiny sub creator-gate-note" id="crGateNote" role="status" aria-live="polite"></p>
-    </div>
-  </div>
-
   <!-- ══════════ DASHBOARD ══════════ -->
   <div id="crDash" hidden>
 
@@ -67,12 +49,18 @@
             Your code has been used for <b id="crPurchasesInline">0</b> <span id="crPurchasesWord">purchases</span>.
           </p>
         </div>
-        <button class="btn btn-soft creator-signout" id="crSignOut" type="button">Not you?</button>
+        <button class="btn btn-soft creator-signout" id="crSignOut" type="button">Sign out</button>
       </div>
     </div>
 
     <section class="section">
       <div class="wrap">
+
+        <!-- PAUSED NOTICE -->
+        <div class="notice fu" id="crPaused" style="--d:0s" hidden>
+          <span class="notice-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="10" y1="9" x2="10" y2="15"/><line x1="14" y1="9" x2="14" y2="15"/></svg></span>
+          <span><b>Your code is switched off.</b> New signups can't use it at the moment — everything you've already earned is unaffected. <a href="../support/">Get in touch</a> if that's unexpected.</span>
+        </div>
 
         <!-- CODE CARD -->
         <div class="code-card fu" style="--d:0s">
@@ -91,14 +79,14 @@
           <!-- Temporarily hidden. Delete the `hidden` attribute to bring the
                code-entry count back; the script fills it in either way. -->
           <div class="stat" hidden>
-            <span class="stat-label">Code entered</span>
+            <span class="stat-label">Code used</span>
             <span class="stat-value" id="crUses">0</span>
-            <span class="stat-note tiny sub">People who typed it in the app</span>
+            <span class="stat-note tiny sub">Phones that entered it</span>
           </div>
           <div class="stat">
             <span class="stat-label">Purchases</span>
             <span class="stat-value" id="crPurchases">0</span>
-            <span class="stat-note tiny sub">Subscriptions started with your code</span>
+            <span class="stat-note tiny sub">First purchases with your code</span>
           </div>
           <div class="stat">
             <span class="stat-label">Conversion</span>
@@ -106,19 +94,28 @@
             <span class="stat-note tiny sub">Of everyone who entered it</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Commission rate</span>
-            <span class="stat-value" id="crRate">—</span>
-            <span class="stat-note tiny sub">Your cut of each subscription</span>
+            <span class="stat-label">Revenue</span>
+            <span class="stat-value" id="crRevenue">—</span>
+            <span class="stat-note tiny sub">After Apple's cut and tax</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Earned</span>
+            <span class="stat-label">Commission rate</span>
+            <span class="stat-value" id="crRate">—</span>
+            <span class="stat-note tiny sub">Your cut of that revenue</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Earnings</span>
             <span class="stat-value" id="crEarned">—</span>
             <span class="stat-note tiny sub">Paid out monthly</span>
           </div>
         </div>
 
+        <p class="tiny sub creator-meta fu" style="--d:.08s">
+          Last used <b id="crLastInput">never</b> · last purchase <b id="crLastPurchase">never</b>
+        </p>
+
         <!-- PAYOUT -->
-        <div class="payout-card fu" style="--d:.08s">
+        <div class="payout-card fu" style="--d:.1s">
           <div class="payout-main">
             <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></div>
             <h3>Ready to get paid?</h3>
@@ -131,8 +128,9 @@
           </div>
         </div>
 
-        <p class="tiny sub creator-foot-note fu" style="--d:.1s">
-          Numbers refresh when you reload. Something look wrong?
+        <p class="tiny sub creator-foot-note fu" style="--d:.12s">
+          Purchases count new customers only — renewals aren't included. Numbers
+          refresh when you reload. Something look wrong?
           <a href="../support/">Let us know</a>.
         </p>
 
@@ -140,13 +138,13 @@
     </section>
   </div>
 
-  <!-- ══════════ NOT FOUND ══════════ -->
+  <!-- ══════════ ERROR / NO LINK ══════════ -->
   <div class="section creator-centre" id="crError" hidden>
     <div class="card creator-gate fu" style="--d:0s">
-      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg></div>
-      <h3 id="crErrorTitle">Code not recognised</h3>
-      <p id="crErrorBody">Check it against the email we sent you — codes are case-insensitive but have to match exactly.</p>
-      <button class="btn btn-soft btn-block" id="crRetry" type="button">Try another code</button>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <h3 id="crErrorTitle">You need your dashboard link</h3>
+      <p id="crErrorBody">Open the link we emailed you when you joined the program.</p>
+      <a class="btn btn-soft btn-block" href="../support/">Contact us</a>
     </div>
   </div>
 
