@@ -27,21 +27,36 @@ alter table public.creator_tokens enable row level security;
 revoke all on public.creator_tokens from anon, authenticated;
 
 
--- ── Issuing a link ─────────────────────────────────────────
--- 64 hex characters, 256 bits of randomness. gen_random_uuid() is built into
--- Postgres 13+, so this needs no extension.
+-- ── Issuing links ──────────────────────────────────────────
+-- Run these as queries, NOT as part of the migration: a real token committed
+-- to git is in the history permanently, and it is the credential for that
+-- creator's dashboard.
+--
+-- Gives every code that hasn't got a live link one. 64 hex characters, 256
+-- bits. gen_random_uuid() is built into Postgres 13+, so no extension needed.
+-- Safe to re-run: codes that already have a live link are skipped, so it
+-- issues links for new creators without disturbing anyone's existing one.
 
 -- insert into public.creator_tokens (token, code, label)
--- values (
---   replace(gen_random_uuid()::text, '-', '') ||
---   replace(gen_random_uuid()::text, '-', ''),
---   'ALEX2509',
---   'Alex — primary link'
--- )
--- returning token;
+-- select replace(gen_random_uuid()::text, '-', '') ||
+--        replace(gen_random_uuid()::text, '-', ''),
+--        r.code,
+--        r.name || ' — dashboard link'
+--   from public.referral r
+--  where not exists (
+--        select 1 from public.creator_tokens t
+--         where t.code = r.code and t.revoked_at is null
+--      );
 
--- The returned token goes in the link:
---   https://macrosnap.shop/creator/#t=<token>
+-- Then read the finished links back out, ready to send:
+
+-- select r.name,
+--        r.code,
+--        'https://macrosnap.shop/creator/#t=' || t.token as link
+--   from public.creator_tokens t
+--   join public.referral r on r.code = t.code
+--  where t.revoked_at is null
+--  order by r.name;
 
 
 -- ── Revoking a link ────────────────────────────────────────
