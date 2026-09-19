@@ -51,7 +51,13 @@ module.exports = async (req, res) => {
     return;
   }
   if (!SUPABASE_URL || !SERVICE_KEY) {
-    res.status(500).json({ error: "not_configured" });
+    // Names only, never values — enough to fix it without leaking anything.
+    // Env is read at module load, so a variable added in Vercel after the
+    // last build won't appear until a redeploy.
+    var missing = [];
+    if (!SUPABASE_URL) missing.push("SUPABASE_URL");
+    if (!SERVICE_KEY) missing.push("SUPABASE_SERVICE_ROLE_KEY");
+    res.status(500).json({ error: "not_configured", missing: missing });
     return;
   }
 
