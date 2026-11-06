@@ -10,6 +10,7 @@
 
 const crypto = require("crypto");
 const A = require("../_lib/agreement.js");
+const mail = require("../_lib/mail.js");
 
 require("../../lib/agreement-engine.js");        // defines globalThis.MS
 const MS = globalThis.MS;
@@ -98,5 +99,23 @@ module.exports = async (req, res) => {
     return;
   }
 
-  res.status(200).json({ ok: true, signedAt, signedDateText: body.signedDateText || "" });
+  // Email last, and never fatal: the signature is already saved, so a mail
+  // outage must not cost the creator their signing. A failure is reported
+  // back for the Vercel log, not to the creator.
+  const mailed = await mail.sendSignedAgreement(rec, {
+    signedAt,
+    signedDateText: body.signedDateText || "",
+    hash: expected,
+    ip,
+    userAgent: String(req.headers["user-agent"] || "").slice(0, 512),
+    pdfBase64: String(body.pdf),
+  });
+  if (!mailed.sent) console.error("agreement email not sent:", mailed.error);
+
+  res.status(200).json({
+    ok: true,
+    signedAt,
+    signedDateText: body.signedDateText || "",
+    emailed: mailed.sent,
+  });
 };

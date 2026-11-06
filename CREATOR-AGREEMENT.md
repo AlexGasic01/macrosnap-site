@@ -16,6 +16,7 @@ creators/agreement/agreement.js   unlock, render, PDF, rail, signature pad
 creators/agreement/agreement.css  styling
 lib/agreement-engine.js           the agreement text + HTML/PDF renderers (verbatim; do not edit)
 api/_lib/agreement.js             creator lookup, constant-time match, rate limit, Supabase
+api/_lib/mail.js                  emails the signed PDF (optional)
 api/creator-agreement/verify.js   POST: name + code -> that creator's terms
 api/creator-agreement/sign.js     POST: store the signed agreement
 assets/agreement/Inter-*.ttf      fonts for the PDF (see §5 — not stock Inter)
@@ -77,6 +78,34 @@ Already set for the creator dashboard, and reused here:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → `service_role` |
 
 Vercel bakes env vars in at build time, so a change needs a redeploy.
+
+### Emailing the signed PDF (optional)
+
+On a successful signing the PDF is emailed to the company through
+[Resend](https://resend.com). Three more variables turn it on:
+
+| Name | Value |
+|---|---|
+| `RESEND_API_KEY` | from resend.com → API Keys |
+| `AGREEMENT_EMAIL_FROM` | a sender on a domain verified in Resend, e.g. `agreements@macrosnap.shop` |
+| `AGREEMENT_EMAIL_TO` | comma-separated recipients |
+
+Recipients are an environment variable rather than code because this repo is
+public and the addresses are personal.
+
+Resend needs the sending domain verified by DNS before it will send to
+arbitrary addresses — its test sender only reaches the account's own signup
+address. Add `macrosnap.shop` under Resend → Domains and apply the records it
+gives you.
+
+**Email never affects signing.** It is sent after the row is written, and any
+failure — bad key, unverified domain, Resend down, nothing configured at all —
+is logged and ignored. The creator still sees a successful signing, and the
+PDF is still on the row in Supabase. The sign response carries `emailed: true`
+or `false` so the Vercel log tells you which.
+
+If it is not sending, the function log line is `agreement email not sent:` and
+the reason.
 
 ---
 
