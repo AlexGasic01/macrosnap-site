@@ -10,7 +10,11 @@
   <link rel="icon" href="../../assets/icon.png" />
   <title>Creator Agreement — MacroSnap</title>
   <link rel="stylesheet" href="../../styles.css" />
-  <link rel="stylesheet" href="agreement.css" />
+  <!-- Root-absolute, not relative: Vercel serves this page at the
+       extensionless URL too, and without a trailing slash a sibling
+       path would resolve one directory up. The ../../ paths below are
+       unaffected — they reach the root either way. -->
+  <link rel="stylesheet" href="/creators/agreement/agreement.css" />
 </head>
 <body>
 
@@ -87,6 +91,6 @@
 <script src="../../assets/vendor/pdf-lib.min.js"></script>
 <script src="../../assets/vendor/fontkit.umd.min.js"></script>
 <script src="../../lib/agreement-engine.js"></script>
-<script src="agreement.js"></script>
+<script src="/creators/agreement/agreement.js"></script>
 </body>
 </html>

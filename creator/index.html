@@ -168,6 +168,10 @@
  </div>
 </footer>
 
-<script src="creator.js"></script>
+<!-- Root-absolute, not relative: Vercel serves this page at the
+     extensionless URL too, and without a trailing slash a sibling
+     path would resolve one directory up. The ../../ paths below are
+     unaffected — they reach the root either way. -->
+<script src="/creator/creator.js"></script>
 </body>
 </html>
