@@ -32,6 +32,24 @@ create table if not exists public.creator_agreements (
   user_agent           text
 );
 
+-- ── Already ran the first version of this file? ───────────
+-- The first version only created a row once someone SIGNED, so creator_name,
+-- signed_at, agreement_sha256, signature_png_base64 and pdf_base64 were all
+-- NOT NULL. A row now exists from the moment the creator is added, with those
+-- empty. `create table if not exists` will NOT alter an existing table, so
+-- run this once to convert it — no data is lost:
+--
+--   alter table public.creator_agreements
+--     drop column if exists creator_name,
+--     alter column signed_at            drop not null,
+--     alter column agreement_sha256     drop not null,
+--     alter column signature_png_base64 drop not null,
+--     alter column pdf_base64           drop not null;
+--
+-- Symptom if you skip it: inserting a creator fails with
+-- 'null value in column "creator_name" ... violates not-null constraint'.
+
+
 alter table public.creator_agreements enable row level security;
 
 revoke all on public.creator_agreements from anon, authenticated;
