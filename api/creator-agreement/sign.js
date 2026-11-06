@@ -110,13 +110,12 @@ module.exports = async (req, res) => {
     userAgent: String(req.headers["user-agent"] || "").slice(0, 512),
     pdfBase64: String(body.pdf),
   });
-  if (!mailed.company.sent) console.error("company copy not sent:", mailed.company.error);
-  if (!mailed.creator.sent) console.error("creator copy not sent:", mailed.creator.error);
+  if (!mailed.sent) console.error("agreement email not sent:", mailed.error);
 
   res.status(200).json({
     ok: true,
     signedAt,
     signedDateText: body.signedDateText || "",
-    emailed: { company: mailed.company.sent, creator: mailed.creator.sent },
+    emailed: mailed.sent,
   });
 };

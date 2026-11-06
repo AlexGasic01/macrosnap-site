@@ -29,6 +29,11 @@
   var rail = document.getElementById("agRail");
   var railFill = document.getElementById("agRailFill");
   var jump = document.getElementById("agJump");
+  var modal = document.getElementById("agModal");
+  var modalVeil = document.getElementById("agModalVeil");
+  var modalDl = document.getElementById("agModalDownload");
+  var modalNote = document.getElementById("agModalNote");
+  var modalClose = document.getElementById("agModalClose");
 
   // Verified record, in memory only.
   var session = null;      // { firstName, lastName, accessCode, terms }
@@ -149,10 +154,10 @@
     });
   }
 
-  dlBtn.addEventListener("click", function () {
-    dlBtn.disabled = true;
-    dlNote.textContent = "Preparing…";
-    buildPdf().then(function (bytes) {
+  function downloadPdf(btn, note) {
+    btn.disabled = true;
+    note.textContent = "Preparing…";
+    return buildPdf().then(function (bytes) {
       var url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
       var a = document.createElement("a");
       a.href = url;
@@ -162,13 +167,54 @@
       a.remove();
       // Revoke late: Safari needs the URL to outlive the click.
       setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
-      dlNote.textContent = "";
-      dlBtn.disabled = false;
+      note.textContent = "";
+      btn.disabled = false;
     })["catch"](function () {
-      dlNote.textContent = "Couldn't build the PDF. Try again.";
-      dlBtn.disabled = false;
+      note.textContent = "Couldn't build the PDF. Try again.";
+      btn.disabled = false;
     });
-  });
+  }
+
+  dlBtn.addEventListener("click", function () { downloadPdf(dlBtn, dlNote); });
+  modalDl.addEventListener("click", function () { downloadPdf(modalDl, modalNote); });
+
+  /* ── Success modal ────────────────────────────────────── */
+
+  var lastFocus = null;
+
+  function openModal() {
+    // By the time this runs the Sign button has been removed, so focus has
+    // already fallen to <body>. Restoring to that would leave the keyboard
+    // nowhere, so only a real control counts.
+    var prev = document.activeElement;
+    lastFocus = prev && prev !== document.body && prev !== document.documentElement
+      ? prev : null;
+    modal.hidden = false;
+    modalDl.focus();
+    document.addEventListener("keydown", onModalKey);
+  }
+
+  function closeModal() {
+    modal.hidden = true;
+    document.removeEventListener("keydown", onModalKey);
+    // Back to the toolbar button, which now downloads the same signed PDF.
+    var back = lastFocus && document.contains(lastFocus) ? lastFocus : dlBtn;
+    back.focus();
+  }
+
+  function onModalKey(e) {
+    if (e.key === "Escape") { closeModal(); return; }
+    if (e.key !== "Tab") return;
+    // Keep Tab inside the dialog: there are exactly three focusable controls.
+    var items = [modalDl, modalClose].filter(function (el) { return !el.disabled; });
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  modalClose.addEventListener("click", closeModal);
+  modalVeil.addEventListener("click", closeModal);
 
   /* ── Right rail ───────────────────────────────────────── */
 
@@ -309,6 +355,7 @@
 
     hideJumpForGood();
     dlLabel.textContent = "Download signed PDF";
+    openModal();
   }
 
   /* ── Helpers ──────────────────────────────────────────── */
