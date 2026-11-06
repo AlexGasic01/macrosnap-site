@@ -93,6 +93,22 @@ On a successful signing the PDF is emailed to the company through
 Recipients are an environment variable rather than code because this repo is
 public and the addresses are personal.
 
+**Two separate emails go out, not one with everyone on it:**
+
+| To | Contains |
+|---|---|
+| `AGREEMENT_EMAIL_TO` | the PDF, plus signing date, access code, agreement hash, IP and user agent |
+| the creator | the PDF and the signing date, replying to the first company address |
+
+The creator's address comes from `terms.creatorEmail` on their own row. It is
+only used when it is plainly a single address — a blank, a typo or a
+comma-stuffed value is treated as absent rather than guessed at, so a signed
+contract cannot be sent somewhere unintended. No creator email on the record
+simply means only the company copy goes out.
+
+The audit detail is kept off the creator's copy. They get what they signed;
+the IP and user agent are the company's evidence, not a note to the signer.
+
 Resend needs the sending domain verified by DNS before it will send to
 arbitrary addresses — its test sender only reaches the account's own signup
 address. Add `macrosnap.shop` under Resend → Domains and apply the records it
@@ -101,11 +117,11 @@ gives you.
 **Email never affects signing.** It is sent after the row is written, and any
 failure — bad key, unverified domain, Resend down, nothing configured at all —
 is logged and ignored. The creator still sees a successful signing, and the
-PDF is still on the row in Supabase. The sign response carries `emailed: true`
-or `false` so the Vercel log tells you which.
+PDF is still on the row in Supabase. The sign response carries
+`emailed: { company, creator }` so the Vercel log tells you which went.
 
-If it is not sending, the function log line is `agreement email not sent:` and
-the reason.
+If one is not arriving, the function log lines are `company copy not sent:`
+and `creator copy not sent:`, each with the reason.
 
 ---
 

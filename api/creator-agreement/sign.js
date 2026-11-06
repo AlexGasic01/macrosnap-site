@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
   }
 
   // Email last, and never fatal: the signature is already saved, so a mail
-  // outage must not cost the creator their signing. A failure is reported
+  // outage must not cost the creator their signing. Failures are reported
   // back for the Vercel log, not to the creator.
   const mailed = await mail.sendSignedAgreement(rec, {
     signedAt,
@@ -110,12 +110,13 @@ module.exports = async (req, res) => {
     userAgent: String(req.headers["user-agent"] || "").slice(0, 512),
     pdfBase64: String(body.pdf),
   });
-  if (!mailed.sent) console.error("agreement email not sent:", mailed.error);
+  if (!mailed.company.sent) console.error("company copy not sent:", mailed.company.error);
+  if (!mailed.creator.sent) console.error("creator copy not sent:", mailed.creator.error);
 
   res.status(200).json({
     ok: true,
     signedAt,
     signedDateText: body.signedDateText || "",
-    emailed: mailed.sent,
+    emailed: { company: mailed.company.sent, creator: mailed.creator.sent },
   });
 };
