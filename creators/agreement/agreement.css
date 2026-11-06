@@ -41,7 +41,10 @@ body[data-page="agreement"],
 .ag-brand .wordmark { font-size: 22px; }
 
 .ag-gate { width: 100%; max-width: 440px; padding: 30px 28px; }
-.ag-gate h1 { font-size: 24px; letter-spacing: -0.8px; margin-bottom: 8px; }
+/* Carries the gap down to the form. An intro paragraph, if one is added
+   back, sits inside it: adjacent margins collapse, so the spacing holds
+   either way. */
+.ag-gate h1 { font-size: 24px; letter-spacing: -0.8px; margin-bottom: 22px; }
 .ag-gate > p { font-size: 14px; line-height: 1.65; margin-bottom: 22px; }
 
 .ag-form { gap: 15px; }
