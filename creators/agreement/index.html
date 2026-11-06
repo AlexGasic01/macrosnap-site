@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-page="agreement">
+<head>
+<!-- charset must stay within the document's first 1024 bytes or browsers
+     stop looking for it. -->
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <link rel="icon" href="../../assets/icon.png" />
+  <title>Creator Agreement — MacroSnap</title>
+  <link rel="stylesheet" href="../../styles.css" />
+  <link rel="stylesheet" href="agreement.css" />
+</head>
+<body>
+
+<main id="main">
+
+  <!-- ══════════ SCREEN 1: UNLOCK ══════════ -->
+  <section class="ag-unlock" id="agUnlock">
+    <div class="ag-brand">
+      <img src="../../assets/icon.png" width="44" height="44" alt="" />
+      <span class="wordmark">MacroSnap</span>
+    </div>
+
+    <div class="card ag-gate">
+      <h1>Your Creator Agreement</h1>
+      <p>Enter your name exactly as we have it, and the access code we sent you.</p>
+
+      <form class="form ag-form" id="agForm" novalidate>
+        <div class="ag-row">
+          <label for="agFirst">First name
+            <input id="agFirst" name="firstName" type="text" autocomplete="given-name"
+                   autocapitalize="off" autocorrect="off" spellcheck="false" required />
+          </label>
+          <label for="agLast">Last name
+            <input id="agLast" name="lastName" type="text" autocomplete="family-name"
+                   autocapitalize="off" autocorrect="off" spellcheck="false" required />
+          </label>
+        </div>
+        <label for="agCode">Access code
+          <input id="agCode" name="accessCode" type="text" autocomplete="off"
+                 autocapitalize="off" autocorrect="off" spellcheck="false"
+                 placeholder="MS-0000-0000" required />
+        </label>
+        <button class="btn btn-cta btn-block" id="agSubmit" type="submit" disabled>View agreement</button>
+      </form>
+
+      <p class="ag-error" id="agError" role="alert" aria-live="polite" hidden></p>
+    </div>
+
+    <p class="tiny sub ag-foot">
+      Trouble getting in? <a href="../../support/">Contact the MacroSnap team</a>.
+    </p>
+  </section>
+
+  <!-- ══════════ SCREEN 2: AGREEMENT ══════════ -->
+  <section class="ag-view" id="agView" hidden>
+
+    <!-- Top-left: download. Sticky so it stays reachable down a 7-page read. -->
+    <div class="ag-toolbar">
+      <button class="btn btn-soft ag-download" id="agDownload" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 19h16"/></svg>
+        <span id="agDownloadLabel">Download PDF</span>
+      </button>
+      <span class="tiny sub ag-dlnote" id="agDownloadNote" role="status" aria-live="polite"></span>
+    </div>
+
+    <!-- Right rail: reading progress + jump to the signature block. -->
+    <div class="ag-rail" id="agRail" aria-hidden="true">
+      <div class="ag-rail-track"><div class="ag-rail-fill" id="agRailFill"></div></div>
+    </div>
+    <button class="ag-jump" id="agJump" type="button">Sign at the bottom ↓</button>
+
+    <article class="ag-paper" id="agPaper">
+      <header class="ag-paper-head">
+        <img src="../../assets/icon.png" width="38" height="38" alt="" />
+        <span class="wordmark">MacroSnap</span>
+      </header>
+      <div id="agBody"></div>
+    </article>
+
+  </section>
+
+</main>
+
+<script src="../../assets/vendor/pdf-lib.min.js"></script>
+<script src="../../assets/vendor/fontkit.umd.min.js"></script>
+<script src="../../lib/agreement-engine.js"></script>
+<script src="agreement.js"></script>
+</body>
+</html>

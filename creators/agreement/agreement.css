@@ -1,0 +1,240 @@
+/* ═══════════════════════════════════════════════════════════
+   MacroSnap — Creator Agreement signing page
+   ═══════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: "Inter";
+  src: url("../../assets/agreement/Inter-Regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../../assets/agreement/Inter-Bold.woff2") format("woff2");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+body[data-page="agreement"],
+[data-page="agreement"] body { font-family: "Inter", system-ui, sans-serif; }
+
+[data-page="agreement"] {
+  /* No fixed site nav on this page, so the body's nav offset is not wanted. */
+  --paper: 760px;
+}
+[data-page="agreement"] body { padding-top: 0; font-family: "Inter", system-ui, sans-serif; }
+
+/* Focus is never removed, only restyled — this page is a legal control flow
+   and must be fully operable from the keyboard. */
+[data-page="agreement"] :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Screen 1: unlock ───────────────────────────────────── */
+.ag-unlock {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px; padding: 48px 20px;
+}
+.ag-brand { display: flex; align-items: center; gap: 11px; }
+.ag-brand img { border-radius: 23%; display: block; }
+.ag-brand .wordmark { font-size: 22px; }
+
+.ag-gate { width: 100%; max-width: 440px; padding: 30px 28px; }
+.ag-gate h1 { font-size: 24px; letter-spacing: -0.8px; margin-bottom: 8px; }
+.ag-gate > p { font-size: 14px; line-height: 1.65; margin-bottom: 22px; }
+
+.ag-form { gap: 15px; }
+.ag-form label { gap: 7px; min-width: 0; }
+/* An input carries a default intrinsic width (size=20) that a grid track
+   will not shrink below, so the second column overflows the card without
+   these two. */
+.ag-form input { width: 100%; min-width: 0; }
+.ag-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.ag-row > label { min-width: 0; }
+.ag-form .btn { margin-top: 4px; }
+.ag-form .btn:disabled { opacity: .45; cursor: not-allowed; }
+.ag-form .btn:disabled:active { transform: none; }
+#agCode { letter-spacing: 1px; }
+
+.ag-error {
+  margin-top: 16px; font-size: 13.5px; line-height: 1.6;
+  color: #FF8B7B;
+  background: rgba(255, 139, 123, .08);
+  border-radius: 10px; padding: 11px 13px;
+}
+.ag-foot { text-align: center; }
+.ag-foot a { color: var(--accent); }
+.ag-foot a:hover { text-decoration: underline; }
+
+/* ── Screen 2: the paper ────────────────────────────────── */
+.ag-view { padding: 0 0 120px; }
+
+.ag-toolbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 20px;
+  background: linear-gradient(var(--bg) 70%, transparent);
+}
+.ag-download { display: inline-flex; align-items: center; gap: 9px; font-size: 13.5px; padding: 10px 16px; }
+.ag-download svg { width: 16px; height: 16px; flex-shrink: 0; }
+.ag-dlnote:empty { display: none; }
+
+.ag-paper {
+  max-width: var(--paper); margin: 0 auto; padding: 0 24px;
+  color: #F2F2F2;
+  font-size: 14.5px; line-height: 1.75;
+}
+.ag-paper-head {
+  display: flex; align-items: center; gap: 11px;
+  padding-bottom: 20px; margin-bottom: 28px;
+  border-bottom: 1px solid #3A3A3A;
+}
+.ag-paper-head img { border-radius: 23%; display: block; }
+.ag-paper-head .wordmark { font-size: 19px; }
+
+.ag-paper h1 { font-size: 34px; letter-spacing: -1.4px; margin-bottom: 6px; color: #FFFFFF; }
+.ag-paper .sub { font-size: 15px; color: var(--body); margin-bottom: 30px; }
+.ag-paper h2 {
+  font-size: 17px; letter-spacing: -0.4px; color: #FFFFFF;
+  margin: 34px 0 12px; padding-top: 4px;
+}
+.ag-paper p { color: #D7D7D7; margin-bottom: 13px; }
+.ag-paper strong { color: #FFFFFF; font-weight: 700; }
+.ag-paper ul { margin: 0 0 16px; padding-left: 20px; display: flex; flex-direction: column; gap: 9px; }
+.ag-paper li { color: #D7D7D7; padding-left: 4px; }
+.ag-paper li::marker { color: var(--subtext); }
+
+/* Tables scroll rather than squash the page at phone width. */
+.ag-paper .tw { overflow-x: auto; margin: 0 0 18px; -webkit-overflow-scrolling: touch; }
+.ag-paper table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 13px; }
+.ag-paper th, .ag-paper td {
+  border: 1px solid #3A3A3A; padding: 9px 11px;
+  text-align: left; vertical-align: top; line-height: 1.55;
+}
+.ag-paper th { background: #262626; color: #FFFFFF; font-weight: 700; }
+.ag-paper td { color: #D7D7D7; }
+
+/* ── Signature block ────────────────────────────────────── */
+.ag-paper .sig {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 34px;
+  margin-top: 30px; padding-top: 26px; border-top: 1px solid #3A3A3A;
+  scroll-margin-top: 80px;
+}
+.ag-paper .party { display: flex; flex-direction: column; }
+.ag-paper .role {
+  font-size: 11px; font-weight: 700; letter-spacing: .7px;
+  text-transform: uppercase; color: var(--body); margin-bottom: 6px;
+}
+.ag-paper .org { font-size: 16px; font-weight: 700; color: #FFFFFF; margin-bottom: 30px; }
+.ag-paper .line { height: 1px; background: #5A5A5A; margin-top: 30px; }
+.ag-paper .lab { font-size: 11px; color: var(--body); margin-top: 6px; }
+.ag-paper .nm { font-size: 14px; color: #D7D7D7; margin-top: 24px; }
+.ag-paper .dt { min-height: 20px; }
+
+/* ── Signature pad ──────────────────────────────────────── */
+.sign-pad-wrap { position: relative; margin-top: 4px; }
+.sign-pad {
+  display: block; width: 100%; height: 140px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .03);
+  box-shadow: inset 0 0 0 1px #3A3A3A;
+  touch-action: none;                    /* so a stroke never scrolls the page */
+  /* A pen, nib at the hotspot. crosshair is the fallback where the data-URI
+     cursor is refused. */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 21l3.5-1 11-11-2.5-2.5-11 11z' fill='%231A1A1A'/%3E%3Cpath d='M15 6.5 17.5 9l2-2a1.8 1.8 0 0 0 0-2.5l0 0a1.8 1.8 0 0 0-2.5 0z' fill='%233DD68C'/%3E%3C/svg%3E") 2 22, crosshair;
+}
+.sign-pad.is-locked { cursor: default; }
+.sign-pad-hint {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  pointer-events: none; font-size: 14px; color: var(--subtext);
+}
+.sign-pad-base {
+  position: absolute; left: 16px; right: 16px; bottom: 34px; height: 1px;
+  background: #3A3A3A; pointer-events: none;
+}
+.sign-clear {
+  background: none; border: 0; padding: 4px 0; margin-top: 8px;
+  font-size: 12.5px; color: var(--body); text-decoration: underline; cursor: pointer;
+}
+.sign-clear:hover { color: var(--text); }
+
+.sign-img { display: block; max-width: 100%; height: 86px; object-fit: contain; object-position: left bottom; }
+
+.sign-field { margin-top: 26px; }
+.sign-field .val { font-size: 14px; color: #D7D7D7; min-height: 20px; }
+.sign-field .line { margin-top: 6px; }
+
+.sign-agree {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-top: 26px; font-size: 13.5px; line-height: 1.6; color: #D7D7D7;
+  cursor: pointer;
+}
+.sign-agree input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--cta); flex-shrink: 0; cursor: pointer; }
+.sign-submit { margin-top: 18px; width: 100%; }
+.sign-submit:disabled { opacity: .45; cursor: not-allowed; }
+.sign-submit:disabled:active { transform: none; }
+
+.sign-done {
+  margin-top: 18px; font-size: 13.5px; line-height: 1.6;
+  color: var(--accent);
+  background: rgba(61, 211, 138, .10);
+  border-radius: 10px; padding: 12px 14px;
+}
+.sign-fail {
+  margin-top: 14px; font-size: 13.5px; line-height: 1.6;
+  color: #FF8B7B; background: rgba(255, 139, 123, .08);
+  border-radius: 10px; padding: 11px 13px;
+}
+
+/* ── Right rail + jump pill ─────────────────────────────── */
+.ag-rail {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 6px; z-index: 15;
+  cursor: pointer;
+}
+.ag-rail-track { position: absolute; inset: 0; background: rgba(255, 255, 255, .05); }
+.ag-rail-fill {
+  position: absolute; top: 0; left: 0; right: 0; height: 0;
+  background: var(--accent); opacity: .55;
+}
+.ag-jump {
+  position: fixed; right: 22px; top: 50%; transform: translateY(-50%);
+  z-index: 16;
+  display: inline-flex; align-items: center;
+  background: var(--cta); color: #0F1F17;
+  border: 0; border-radius: 999px; padding: 11px 18px;
+  font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: -0.2px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .5);
+  transition: opacity .25s, transform .25s;
+}
+.ag-jump:hover { filter: brightness(1.07); }
+.ag-jump[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-jump { transition: none; }
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .ag-row { grid-template-columns: 1fr; }
+  .ag-gate { padding: 24px 20px; }
+  .ag-paper { padding: 0 18px; font-size: 14px; }
+  .ag-paper h1 { font-size: 27px; letter-spacing: -1px; }
+  .ag-paper h2 { font-size: 16px; }
+  .ag-paper .sig { grid-template-columns: 1fr; gap: 42px; }
+  .ag-toolbar { padding: 12px 18px; }
+
+  /* The rail is a scrollbar-width sliver on a phone, so the pill becomes an
+     ordinary floating button instead. */
+  .ag-rail { display: none; }
+  .ag-jump {
+    right: 16px; top: auto; bottom: 18px; transform: none;
+    padding: 13px 20px; font-size: 13.5px;
+  }
+}
+
+@media (max-width: 380px) {
+  .ag-paper { padding: 0 14px; }
+  .ag-jump { right: 12px; bottom: 14px; }
+}
