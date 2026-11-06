@@ -58,7 +58,9 @@ body[data-page="agreement"],
 .ag-form .btn { margin-top: 4px; }
 .ag-form .btn:disabled { opacity: .45; cursor: not-allowed; }
 .ag-form .btn:disabled:active { transform: none; }
+/* Tracking suits a typed code, not the word in the placeholder. */
 #agCode { letter-spacing: 1px; }
+#agCode::placeholder { letter-spacing: normal; }
 
 .ag-error {
   margin-top: 16px; font-size: 13.5px; line-height: 1.6;
