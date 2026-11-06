@@ -5,10 +5,7 @@
  * three give the same 401, so the response never says which part was wrong.
  */
 
-const {
-  findCreator, termsFor, clientIp, isRateLimited, recordFailure, readJsonBody,
-} = require("../_lib/creators.js");
-const store = require("../_lib/store.js");
+const A = require("../_lib/agreement.js");
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
@@ -17,39 +14,38 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: "method_not_allowed" });
     return;
   }
+  if (!A.configured()) {
+    res.status(500).json({ error: "not_configured", missing: A.missingEnv() });
+    return;
+  }
 
-  const ip = clientIp(req);
-  if (isRateLimited(ip)) {
+  const ip = A.clientIp(req);
+  if (A.isRateLimited(ip)) {
     res.status(429).json({ error: "rate_limited" });
     return;
   }
 
-  const body = readJsonBody(req);
-  const rec = findCreator(body.firstName, body.lastName, body.accessCode);
+  const body = A.readJsonBody(req);
+
+  let rec;
+  try {
+    rec = await A.findCreator(body.firstName, body.lastName, body.accessCode);
+  } catch (e) {
+    res.status(502).json({ error: "upstream" });
+    return;
+  }
 
   if (!rec) {
-    recordFailure(ip);
+    A.recordFailure(ip);
     res.status(401).json({ error: "invalid" });
     return;
   }
 
-  let alreadySigned = false;
-  if (store.configured()) {
-    try {
-      alreadySigned = Boolean(await store.findSigned(rec.accessCode));
-    } catch (e) {
-      // A storage outage must not lock a creator out of reading their
-      // agreement. They see the unsigned state; the sign endpoint is the one
-      // that has to be right, and it re-checks there.
-      alreadySigned = false;
-    }
-  }
-
   res.status(200).json({
-    creatorName: rec.firstName + " " + rec.lastName,
-    firstName: rec.firstName,
-    lastName: rec.lastName,
-    terms: termsFor(rec),
-    alreadySigned,
+    creatorName: rec.first_name + " " + rec.last_name,
+    firstName: rec.first_name,
+    lastName: rec.last_name,
+    terms: A.termsFor(rec),
+    alreadySigned: Boolean(rec.signed_at),
   });
 };

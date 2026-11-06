@@ -15,9 +15,7 @@ creators/agreement/index.html     the page
 creators/agreement/agreement.js   unlock, render, PDF, rail, signature pad
 creators/agreement/agreement.css  styling
 lib/agreement-engine.js           the agreement text + HTML/PDF renderers (verbatim; do not edit)
-api/_lib/creators.js              creator lookup, constant-time match, rate limit
-api/_lib/creators.json            the creator records  ← you edit this
-api/_lib/store.js                 Supabase access for signed agreements
+api/_lib/agreement.js             creator lookup, constant-time match, rate limit, Supabase
 api/creator-agreement/verify.js   POST: name + code -> that creator's terms
 api/creator-agreement/sign.js     POST: store the signed agreement
 assets/agreement/Inter-*.ttf      fonts for the PDF (see §5 — not stock Inter)
@@ -25,7 +23,7 @@ assets/agreement/Inter-*.woff2    fonts for the page
 assets/agreement/icon.png         160×160 rounded app icon, drawn in every PDF header
 assets/vendor/pdf-lib.min.js      pdf-lib 1.17.1, vendored
 assets/vendor/fontkit.umd.min.js  @pdf-lib/fontkit 1.1.1, vendored
-supabase/creator_agreements.sql   migration for the signed-agreement table
+supabase/creator_agreements.sql   migration for the creator_agreements table
 ```
 
 The libraries are vendored rather than loaded from a CDN: this is a signing
@@ -35,45 +33,30 @@ flow, and it should not stop working because someone else's CDN is down.
 
 ## 2. Adding a creator
 
-Edit `api/_lib/creators.json` and deploy. One object per creator, using the
-same fields as the Creator Agreement Builder:
+One row in `public.creator_agreements`, added in the Supabase table editor —
+the same place you manage referral codes and rates. No deploy, and no creator
+data in the repo or in the browser.
 
-```json
-{
-  "accessCode": "MS-7F3K-92QX",
-  "firstName": "Jordan",
-  "lastName": "Smith",
-  "terms": { "startDate": "2026-11-10", "payModel": "view", "ratePer1k": "1.20", ... }
-}
-```
+| Column | |
+|---|---|
+| `access_code` | the secret they type. Treat it as a password. |
+| `first_name`, `last_name` | matched exactly, case-sensitively |
+| `terms` | jsonb, the same fields as the Creator Agreement Builder |
 
 Anything left out of `terms` falls back to `MS.DEFAULTS` in the engine.
-`creatorName` is always built from `firstName + " " + lastName` on the server,
+`creatorName` is always built from the stored `first_name` + `last_name`,
 never from what the visitor typed.
 
 `payModel` is `view`, `affiliate` or `hybrid`. `schedule` is `daily`, `every2`,
 `every3`, `everyN` or `perWeek`.
 
-### Why the file lives under `/api`
+`supabase/creator_agreements.sql` has a ready-made insert that generates an
+unguessable access code and returns it.
 
-**Everything outside `/api` is served as a static file.** A `data/creators.json`
-at the repo root would be downloadable at `macrosnap.shop/data/creators.json` —
-every access code, public. Under `/api` it is bundled with the function and not
-served, and the leading underscore keeps it from becoming a route.
-
-**Verify that once after the first deploy**, because it is the one thing here
-that depends on hosting behaviour rather than on code:
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' https://www.macrosnap.shop/api/_lib/creators.json
-```
-
-`404` is correct. **If that ever returns `200`, rotate every access code** and
-switch to the environment variable instead: set `CREATORS_JSON` in Vercel to
-the JSON array as a single line. The code prefers it over the file whenever it
-is set, so nothing else has to change.
-
----
+**The row is both halves of the job**: it says who may open the agreement, and
+it holds the signature once they sign. The signature columns stay null until
+then, which is how `alreadySigned` is decided and how signing twice is
+prevented.
 
 ## 3. Setup
 
@@ -81,7 +64,8 @@ is set, so nothing else has to change.
 
 `supabase/creator_agreements.sql` — copy into the MacroSnap repo's
 `supabase/migrations/` and apply there. Same access model as the rest:
-RLS on, no policies, service role only.
+RLS on, no policies, service role only, so the table is unreachable with the
+anon key and nothing about a creator is ever in the repo.
 
 ### Environment
 
@@ -122,13 +106,15 @@ SHA-256 of `MS.toText(...)`. The endpoint recomputes that hash from the
 **stored** terms and refuses with `409` if it differs — that is what stops a
 creator signing one document while a different one is on file.
 
-`access_code` is the primary key of `creator_agreements`, so a second signing
-attempt conflicts at the database rather than overwriting the first signature.
-After signing, `verify` returns `alreadySigned: true` and the page opens
-read-only with the signed PDF available.
+The signature is written with `PATCH ... &signed_at=is.null`, so a second
+attempt matches no row and updates nothing — the first signature cannot be
+overwritten, even by two requests racing. After signing, `verify` returns
+`alreadySigned: true` and the page opens read-only with the signed PDF
+available.
 
-Stored per signature: the PDF, the signature PNG, `signed_at`, the hash, the
-terms as signed, the IP address and the user agent.
+Stored on the row: the PDF, the signature PNG, `signed_at`, the hash of the
+agreement text, the IP address and the user agent. The terms are already
+there — they are what was signed.
 
 ---
 
@@ -183,11 +169,14 @@ currency symbols; widen them if a creator needs more.
 
 ## 6. What was verified
 
-Both suites run against the real endpoint modules and the real page, with
-Supabase faked. 23 API checks and 33 browser checks, all passing:
+Both suites run against the real endpoint modules and the real page, with the
+Supabase table faked in memory. 23 API checks and 34 browser checks, all
+passing:
 
 - Wrong case in any of the three fields → generic 401; exact match unlocks.
-- A second creator's code, name and terms never appear in any response.
+- A second creator's code, name and terms never appear in any response, and
+  signing one creator leaves the other's row untouched.
+- Supabase being down gives a 502 rather than letting anyone through.
 - Rate limit trips on the 6th failure, per IP.
 - Hash mismatch → 409; signing twice → 409; oversized PDF → 413.
 - No `[placeholder]` brackets in the rendered agreement.
@@ -206,8 +195,9 @@ Supabase faked. 23 API checks and 33 browser checks, all passing:
 - **Rate limiting is per serverless instance** (§4).
 - **No "resend my link"** — a creator who cannot get in has to be helped by
   hand through support.
-- **Re-signing requires deleting the row**, which destroys the evidence of the
-  first signing. There is no amendment flow.
+- **Re-signing means clearing the signature columns**, which destroys the
+  evidence of the first signing. There is no amendment flow. The SQL file has
+  the statement.
 - **Company's side is unsigned.** The PDF leaves the Company signature, name
   and date lines blank; only `companyTitle` is printed. If MacroSnap needs to
   countersign, that is not built.

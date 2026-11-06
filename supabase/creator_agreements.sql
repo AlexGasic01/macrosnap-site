@@ -1,57 +1,101 @@
 -- ═══════════════════════════════════════════════════════════
--- creator_agreements — the signed e-signature records
+-- creator_agreements — one row per creator
 --
 -- Full context: CREATOR-AGREEMENT.md at the repo root.
+--
+-- The row is both halves of the job: the access record that says who may
+-- open the agreement, and the signature once they sign it. The signature
+-- columns are null until then.
 --
 -- Copy this into the MacroSnap repo's supabase/migrations/ and apply it
 -- there; this repo has no Supabase link.
 --
 -- Same access model as public.referral: RLS on, no policies, no grants, so
--- only the service role can read or write it. The signing endpoint on Vercel
--- is the only thing that touches it.
+-- only the service role can read or write it.
 -- ═══════════════════════════════════════════════════════════
 
 create table if not exists public.creator_agreements (
+  -- who may open it
   access_code          text primary key,
   first_name           text not null,
   last_name            text not null,
-  creator_name         text not null,
-  signed_at            timestamptz not null,
-  signed_date_text     text,
-  agreement_sha256     text not null,
   terms                jsonb not null,
-  signature_png_base64 text not null,
-  pdf_base64           text not null,
-  ip_address           text,
-  user_agent           text,
-  created_at           timestamptz not null default now()
-);
+  created_at           timestamptz not null default now(),
 
--- access_code is the primary key, so a second signing attempt for the same
--- creator fails at the database rather than overwriting the first signature.
--- The endpoint turns that conflict into a 409.
+  -- filled in when they sign
+  signed_at            timestamptz,
+  signed_date_text     text,
+  agreement_sha256     text,
+  signature_png_base64 text,
+  pdf_base64           text,
+  ip_address           text,
+  user_agent           text
+);
 
 alter table public.creator_agreements enable row level security;
 
 revoke all on public.creator_agreements from anon, authenticated;
 
 
--- ── Looking at what has been signed ────────────────────────
--- Deliberately excludes pdf_base64, which is large.
+-- ── Adding a creator ───────────────────────────────────────
+-- Do this in the table editor, or here. Anything left out of `terms` falls
+-- back to MS.DEFAULTS in lib/agreement-engine.js.
+--
+-- The access code is a password: make it unguessable, and send it to the
+-- creator over something private.
 
--- select creator_name, access_code, signed_at, signed_date_text,
---        agreement_sha256, ip_address
+-- insert into public.creator_agreements (access_code, first_name, last_name, terms)
+-- values (
+--   'MS-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 4)) ||
+--   '-'   || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 4)),
+--   'Jordan',
+--   'Smith',
+--   jsonb_build_object(
+--     'creatorEmail',  'jordan@example.com',
+--     'startDate',     '2026-11-10',
+--     'currency',      'USD',
+--     'payModel',      'view',
+--     'ratePer1k',     '1.20',
+--     'viewWindow',    7,
+--     'reviewDays',    3,
+--     'schedule',      'every2',
+--     'videosPerDay',  2,
+--     'minPayout',     50,
+--     'weeklyCap',     500,
+--     'processingDays', 3,
+--     'payoutMethod',  'PayPal',
+--     'minTerm',       30,
+--     'timezone',      'UTC',
+--     'law',           'England and Wales',
+--     'companyEmail',  'creators@macrosnap.app',
+--     'companyTitle',  'Founder',
+--     'pageSize',      'A4',
+--     'theme',         'dark'
+--   )
+-- )
+-- returning access_code;
+
+
+-- ── Who has signed ─────────────────────────────────────────
+-- Excludes pdf_base64, which is large.
+
+-- select first_name, last_name, access_code,
+--        signed_at, signed_date_text, agreement_sha256, ip_address
 --   from public.creator_agreements
---  order by signed_at desc;
+--  order by signed_at desc nulls last;
 
 
 -- ── Getting a signed PDF back out ──────────────────────────
--- Run in psql, or copy the base64 out of the SQL editor and decode it:
 --   select pdf_base64 from public.creator_agreements where access_code = '...';
 --   -- then locally:  base64 -d < copied.txt > agreement.pdf
 
 
 -- ── Letting a creator re-sign ──────────────────────────────
--- Only after deciding the first signature should not stand; it destroys the
--- evidence of that signing.
--- delete from public.creator_agreements where access_code = '<code>';
+-- Only after deciding the first signature should not stand; this destroys
+-- the evidence of that signing. The access record itself is kept.
+
+-- update public.creator_agreements
+--    set signed_at = null, signed_date_text = null, agreement_sha256 = null,
+--        signature_png_base64 = null, pdf_base64 = null,
+--        ip_address = null, user_agent = null
+--  where access_code = '<code>';
