@@ -108,8 +108,14 @@ await MS.renderPdf(PDFLib, fontkit, assets, input);   // Uint8Array
 from user input.
 
 Useful `terms` keys for a dashboard: `payModel` (`view` / `affiliate` /
-`hybrid`), `ratePer1k`, `commissionRate`, `startDate`, `minTerm`, `weeklyCap`,
-`minPayout`, `currency`, `law`. Anything absent falls back to `MS.DEFAULTS`.
+`hybrid`), `ratePer1k`, `commissionRate`, `rateLockDays`, `startDate`,
+`minTerm`, `weeklyCap`, `minPayout`, `currency`, `law`. Anything absent falls
+back to `MS.DEFAULTS`.
+
+`rateLockDays` is how long the rate is fixed for, counted from `startDate`
+(clause 4.4). `0` or absent means no lock. A dashboard showing when a
+creator's rate becomes revisable computes it as
+`startDate + rateLockDays days` — the engine stores the number, not the date.
 
 ### If you render a PDF, read this
 

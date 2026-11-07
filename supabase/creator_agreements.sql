@@ -74,6 +74,7 @@ revoke all on public.creator_agreements from anon, authenticated;
 --     'currency',      'USD',
 --     'payModel',      'view',
 --     'ratePer1k',     '1.20',
+--     'rateLockDays',  90,            -- 0 or omitted = no lock
 --     'viewWindow',    7,
 --     'reviewDays',    3,
 --     'schedule',      'every2',
